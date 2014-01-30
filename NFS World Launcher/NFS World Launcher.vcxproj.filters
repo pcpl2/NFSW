@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{49331436-48a7-41f6-a4ff-73520322ecfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\Logger">
+      <UniqueIdentifier>{697fb42e-1da0-466e-b187-45c844a52ac2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\Libcurl">
+      <UniqueIdentifier>{f7b23ad9-8f42-4550-87ae-e3279b0022e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\Libcurl\include">
+      <UniqueIdentifier>{77f746b2-8f88-4b0a-9b9d-dd6a0c2bec01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\Libcurl\lib">
+      <UniqueIdentifier>{e3368bf5-d424-449b-aa28-116027dd4d47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\Tinyxml2">
+      <UniqueIdentifier>{14a9450b-3d4a-4071-8de9-bb4e33bb2db0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Launcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\logger\Logger.cpp">
+      <Filter>lib\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxml2.cpp">
+      <Filter>lib\Tinyxml2</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="includes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Launcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\curl.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\curlbuild.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\curlrules.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\curlver.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\easy.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\mprintf.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\multi.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\typecheck-gcc.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curl\include\curl\stdcheaders.h">
+      <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\logger\Logger.h">
+      <Filter>lib\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tinyxml\tinyxml2.h">
+      <Filter>lib\Tinyxml2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\curl\lib\libcurl_a.lib">
+      <Filter>lib\Libcurl\lib</Filter>
+    </Library>
+  </ItemGroup>
+</Project>
