@@ -44,7 +44,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\curl\include;..\tinyxml;..\logger;.\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
@@ -52,7 +52,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\curl\lib\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>MSVCRT;</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\curl\include;..\tinyxml;..\logger;.\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -76,7 +76,7 @@
       <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
-      <AdditionalLibraryDirectories>..\curl\lib\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

@@ -1,0 +1,17 @@
+# Compiled source #
+###################
+*.dll
+*.exe
+*.o
+
+# Visual Studio generated files #
+######################
+*.opensdf
+*.sdf
+
+# Build and Release Folders #
+######################
+Debug/
+Release/
+NFS World Launcher/Debug/
+NFS World Launcher/Release/

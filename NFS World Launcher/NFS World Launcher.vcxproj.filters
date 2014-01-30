@@ -42,10 +42,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\logger\Logger.cpp">
+    <ClCompile Include="..\libs\logger\Logger.cpp">
       <Filter>lib\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxml2.cpp">
+    <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp">
       <Filter>lib\Tinyxml2</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,42 +62,42 @@
     <ClInclude Include="Launcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\curl.h">
+    <ClInclude Include="..\libs\curl\include\curl\curl.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\curlbuild.h">
+    <ClInclude Include="..\libs\curl\include\curl\curlbuild.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\curlrules.h">
+    <ClInclude Include="..\libs\curl\include\curl\curlrules.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\curlver.h">
+    <ClInclude Include="..\libs\curl\include\curl\curlver.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\easy.h">
+    <ClInclude Include="..\libs\curl\include\curl\easy.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\mprintf.h">
+    <ClInclude Include="..\libs\curl\include\curl\mprintf.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\multi.h">
+    <ClInclude Include="..\libs\curl\include\curl\multi.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\typecheck-gcc.h">
+    <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\curl\include\curl\stdcheaders.h">
+    <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\logger\Logger.h">
+    <ClInclude Include="..\libs\logger\Logger.h">
       <Filter>lib\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="..\tinyxml\tinyxml2.h">
+    <ClInclude Include="..\libs\tinyxml\tinyxml2.h">
       <Filter>lib\Tinyxml2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\curl\lib\libcurl_a.lib">
+    <Library Include="..\libs\curl\lib\libcurl_a.lib">
       <Filter>lib\Libcurl\lib</Filter>
     </Library>
   </ItemGroup>
