@@ -4,8 +4,6 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-int nFreeInternetId = 0;
-
 HWND * Launcher::s_hwWindow = new HWND[1];
 HWND * Launcher::s_hwButtons = new HWND[4];
 HWND * Launcher::s_hwEdit = new HWND[1];
@@ -16,9 +14,17 @@ int Launcher::region;
 
 char sz_Login[128] = { 0 };
 char sz_Password[128] = { 0 };
-char szGameExePath[MAX_PATH] = { 0 }, szGamePath[MAX_PATH] = { 0 }, arg[MAX_PATH] = { 0 };
+char szGameExePath[MAX_PATH] = { 0 }, szGameDataPath[MAX_PATH] = { 0 }, arg[MAX_PATH] = { 0 };
 
 Region * Launcher::R = new Region[4];
+User * Launcher::Logged = new User[0];
+
+HKEY Launcher::hKey = 0;
+
+char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Speed World";
+char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
+char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt";
+char Launcher::GameDir[MAX_PATH] = { 0 };
 
 void Launcher::Initialize(HINSTANCE hInstance)
 {
@@ -27,6 +33,15 @@ void Launcher::Initialize(HINSTANCE hInstance)
 		DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
 
 	WNDCLASSEX wc;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	/*if (!GetGameDirFromRegistry())
+	{
+
+	}*/
+
+	GetGameDirFromRegistry();
 
 	getshardinfo();
 
@@ -47,9 +62,9 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	RegisterClassEx(&wc);
 
-	wc.lpfnWndProc = RegionProc;
-	wc.lpszClassName = "NFSWL_region";
-	RegisterClassEx(&wc);
+//	wc.lpfnWndProc = RegionProc;
+//	wc.lpszClassName = "NFSWL_region";
+//	RegisterClassEx(&wc);
 
 	//_______________________________________________________________________________ main window
 
@@ -62,15 +77,7 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	s_hwEdit[0] = CreateWindowEx(NULL, WC_EDIT, sz_Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 50, 200, 25, s_hwWindow[0], NULL, hInstance, NULL);
 	s_hwText[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 35, 80, 25, s_hwWindow[0], 0, hInstance, 0);
 	s_hwEdit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 50, 200, 25, s_hwWindow[0], NULL, hInstance, NULL);
-
-
-
-	//_______________________________________________________________________________ select region
-
-	s_hwWindow[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_region", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 400, 250, NULL, NULL, hInstance, NULL);
-	s_hwCombo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 110, 80, 150, 200, s_hwWindow[1], NULL, hInstance, NULL);
-	s_hwButtons[2] = CreateWindowEx(NULL, WC_BUTTON, "Select", WS_CHILD | WS_VISIBLE, 260, 150, 100, 30, s_hwWindow[1], (HMENU)ID_Button3, hInstance, NULL);
-	s_hwButtons[3] = CreateWindowEx(NULL, WC_BUTTON, "Exit", WS_CHILD | WS_VISIBLE, 20, 150, 100, 30, s_hwWindow[1], (HMENU)ID_Button4, hInstance, NULL);
+	s_hwCombo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 10, 150, 200, s_hwWindow[0], NULL, hInstance, NULL);
 
 	for (int i = 0; i < sizeof(R); i++)
 	{
@@ -109,7 +116,7 @@ void Launcher::Initialize(HINSTANCE hInstance)
 		SendMessage(s_hwCombo[i], WM_SETFONT, WPARAM(hFont), TRUE);
 	}
 
-	ShowWindow(s_hwWindow[1], SW_SHOWNORMAL);
+	ShowWindow(s_hwWindow[0], SW_SHOWNORMAL);
 	
 }
 
@@ -131,28 +138,11 @@ bool Launcher::Pulse()
 	return true;
 }
 
-int Launcher::StartGame(char *login, char *password, char *server, char *region)
+bool Launcher::Login(char *login, char *password, char *server, char *region)
 {
-	HKEY hKey = 0;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Electronic Arts\\Need For Speed World", NULL, KEY_READ, &hKey) != ERROR_SUCCESS)
-	{
-		MessageBox(NULL, "Cannot find game executable file! #001", "NFSW - Error", MB_ICONERROR);
-		return E_FAIL;
-	}
-
-	unsigned int uiType = REG_SZ;
-	unsigned int uiSize = MAX_PATH;
-	if (RegQueryValueEx(hKey, "GameInstallDir", NULL, (LPDWORD)&uiType, (BYTE *)szGamePath, (LPDWORD)&uiSize) != ERROR_SUCCESS)
-	{
-		MessageBox(NULL, "Cannot find game executable file! #002", "NFSW - Error", MB_ICONERROR);
-		return E_FAIL;
-	}
-
-
 	CURL *curl;
 	CURLcode res;
 	struct curl_slist *headers = NULL;
-	curl_global_init(CURL_GLOBAL_DEFAULT);
 	curl = curl_easy_init();
 	char postthis[256];
 	char url[69];
@@ -188,12 +178,19 @@ int Launcher::StartGame(char *login, char *password, char *server, char *region)
 		Debug("3");
 		/* Check for errors */
 		if (res != CURLE_OK)
+		{
 			Error("curl_easy_perform() failed: %s\n",
-			curl_easy_strerror(res));
-
+				curl_easy_strerror(res));
+			return false;
+		}
 
 		/* always cleanup */
 		curl_easy_cleanup(curl);
+	}
+	else
+	{
+		MessageBox(NULL, "Cannot create curl", "NFSW - Error", MB_ICONERROR);
+		return false;
 	}
 
 	while (output.buffer == 0)
@@ -206,44 +203,31 @@ int Launcher::StartGame(char *login, char *password, char *server, char *region)
 
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
-	tinyxml2::XMLElement* securityTokenElement = doc.FirstChildElement("User")->FirstChildElement("securityToken");
-	tinyxml2::XMLElement* userIdElement = doc.FirstChildElement("User")->FirstChildElement("userId");
+	memcpy(Logged[0].remoteUserId, doc.FirstChildElement("User")->FirstChildElement("remoteUserId")->GetText(), 12);
+	memcpy(Logged[0].securityToken, doc.FirstChildElement("User")->FirstChildElement("securityToken")->GetText(), 50);
+	memcpy(Logged[0].userId, doc.FirstChildElement("User")->FirstChildElement("userId")->GetText(), 10);
 
+	free(output.buffer);
+	return true;
+}
 
-	strcat(szGamePath, "\\Data\\");
-	sprintf(szGameExePath, "%snfsw.exe", szGamePath);
-	sprintf(arg, "\"%s\" %s %s %s %s", szGameExePath, region, server, securityTokenElement->GetText(), userIdElement->GetText());
+int Launcher::StartGame(char *securityToken, char *userId, char *server, char *region)
+{
+	sprintf(szGameDataPath, "%s\\Data\\", Launcher::GameDir);
+	sprintf(szGameExePath, "%snfsw.exe", szGameDataPath);
+	sprintf(arg, "\"%s\" %s %s %s %s", szGameExePath, region, server, securityToken, userId);
 
 	// Create game process
 	STARTUPINFO siStartupInfo = { 0 };
 	PROCESS_INFORMATION piProcessInformation = { 0 };
 	siStartupInfo.cb = sizeof(siStartupInfo);
 
-	if (!CreateProcess(szGameExePath, arg, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, szGamePath, &siStartupInfo, &piProcessInformation))
+	if (!CreateProcess(szGameExePath, arg, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, szGameDataPath, &siStartupInfo, &piProcessInformation))
 	{
 		MessageBox(NULL, "Cannot create game process.", "NFSW - Error", MB_ICONERROR);
 		return E_FAIL;
 	}
 
-/*	// Inject dll
-	char szPath[MAX_PATH] = { 0 };
-	GetModuleFileName(NULL, szPath, MAX_PATH);
-	for (unsigned int i = strlen(szPath); i > 0; i--)
-	{
-		if (szPath[i] == '\\')
-		{
-			szPath[i] = '\0';
-			break;
-		}
-	}
-#ifdef DEBUG
-	strcat(szPath, "\\core_d.dll");
-#else
-	strcat(szPath, "\\core.dll");
-#endif
-	InjectDll(piProcessInformation.hProcess, szPath);*/
-
-	// Restore process thread
 	ResumeThread(piProcessInformation.hThread);
 
 	return S_OK;
@@ -324,6 +308,22 @@ void Launcher::getshardinfo()
 	Debug("in struct[%d] : %s", 3, R[3].Url);
 }
 
+bool Launcher::GetGameDirFromRegistry()
+{
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, GameDirRegistryKeyPath, NULL, KEY_READ, &Launcher::hKey) != ERROR_SUCCESS)
+	{
+		return false;
+	}
+
+	unsigned int uiType = REG_SZ;
+	unsigned int uiSize = MAX_PATH;
+	if (RegQueryValueEx(Launcher::hKey, GameDirRegistryKeyName, NULL, (LPDWORD)&uiType, (BYTE *)Launcher::GameDir, (LPDWORD)&uiSize) != ERROR_SUCCESS)
+	{
+		return false;
+	}
+	return true;
+}
+
 void Launcher::InjectDll(HANDLE hProcess, const char * szDllPath) //TODO: Error handling
 {
 	size_t sLibPathLen = (strlen(szDllPath) + 1);
@@ -360,51 +360,15 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		switch (wParam)
 		{
 		case ID_Button1:
+			EnableWindow(s_hwCombo[0], false);
+			region = SendMessage(s_hwCombo[0], CB_GETCURSEL, 0, 0);
 			GetWindowText(s_hwEdit[0], sz_Login, sizeof(sz_Login));
 			GetWindowText(s_hwEdit[1], sz_Password, sizeof(sz_Password));
-			Launcher::StartGame(sz_Login, sz_Password, R[region].Url, R[region].Name);
+			if(Launcher::Login(sz_Login, sz_Password, R[region].Url, R[region].Name))
+				Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
 			//DestroyWindow(hwnd);
 			break;
 		}
-
-	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}
-
-	return 0;
-}
-
-LRESULT CALLBACK Launcher::RegionProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
-	case WM_CLOSE:
-		DestroyWindow(hwnd);
-		return 0;
-		break;
-
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-
-	case WM_CTLCOLORSTATIC:
-		break;
-
-	case WM_COMMAND:
-		switch (wParam)
-		{
-		case ID_Button3:
-			region = SendMessage(s_hwCombo[0], CB_GETCURSEL, 0, 0);
-			ShowWindow(hwnd, SW_HIDE);
-			ShowWindow(s_hwWindow[0], SW_SHOW);
-			break;
-		case ID_Button4:
-			DestroyWindow(hwnd);
-			break;
-		} break;
-
-
-		return 0;
 
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);

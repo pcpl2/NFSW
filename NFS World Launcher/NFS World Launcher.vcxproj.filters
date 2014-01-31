@@ -42,11 +42,11 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\logger\Logger.cpp">
-      <Filter>lib\Logger</Filter>
-    </ClCompile>
     <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp">
       <Filter>lib\Tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\logger\Logger.cpp">
+      <Filter>lib\Logger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +61,12 @@
     </ClInclude>
     <ClInclude Include="Launcher.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\tinyxml\tinyxml2.h">
+      <Filter>lib\Tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\logger\Logger.h">
+      <Filter>lib\Logger</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\curl\include\curl\curl.h">
       <Filter>lib\Libcurl\include</Filter>
@@ -83,17 +89,11 @@
     <ClInclude Include="..\libs\curl\include\curl\multi.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h">
-      <Filter>lib\Libcurl\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h">
       <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\logger\Logger.h">
-      <Filter>lib\Logger</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\tinyxml\tinyxml2.h">
-      <Filter>lib\Tinyxml2</Filter>
+    <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h">
+      <Filter>lib\Libcurl\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

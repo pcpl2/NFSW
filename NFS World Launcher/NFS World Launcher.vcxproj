@@ -52,7 +52,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>MSVCRT;</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -76,36 +76,36 @@
       <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\logger\Logger.cpp" />
-    <ClCompile Include="..\tinyxml\tinyxml2.cpp" />
+    <ClCompile Include="..\libs\logger\Logger.cpp" />
+    <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp" />
     <ClCompile Include="Launcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\curl\include\curl\curl.h" />
-    <ClInclude Include="..\curl\include\curl\curlbuild.h" />
-    <ClInclude Include="..\curl\include\curl\curlrules.h" />
-    <ClInclude Include="..\curl\include\curl\curlver.h" />
-    <ClInclude Include="..\curl\include\curl\easy.h" />
-    <ClInclude Include="..\curl\include\curl\mprintf.h" />
-    <ClInclude Include="..\curl\include\curl\multi.h" />
-    <ClInclude Include="..\curl\include\curl\stdcheaders.h" />
-    <ClInclude Include="..\curl\include\curl\typecheck-gcc.h" />
-    <ClInclude Include="..\logger\Logger.h" />
-    <ClInclude Include="..\tinyxml\tinyxml2.h" />
+    <ClInclude Include="..\libs\curl\include\curl\curl.h" />
+    <ClInclude Include="..\libs\curl\include\curl\curlbuild.h" />
+    <ClInclude Include="..\libs\curl\include\curl\curlrules.h" />
+    <ClInclude Include="..\libs\curl\include\curl\curlver.h" />
+    <ClInclude Include="..\libs\curl\include\curl\easy.h" />
+    <ClInclude Include="..\libs\curl\include\curl\mprintf.h" />
+    <ClInclude Include="..\libs\curl\include\curl\multi.h" />
+    <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h" />
+    <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h" />
+    <ClInclude Include="..\libs\logger\Logger.h" />
+    <ClInclude Include="..\libs\tinyxml\tinyxml2.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\curl\lib\libcurl_a.lib" />
+    <Library Include="..\libs\curl\lib\libcurl_a.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
