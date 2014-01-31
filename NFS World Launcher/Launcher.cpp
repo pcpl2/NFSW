@@ -23,7 +23,7 @@ HKEY Launcher::hKey = 0;
 
 char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Speed World";
 char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
-char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt";
+char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt"; //GetUserDefaultLangID _de ; _es ; _fr ; _pl ; _pt ; _ru ; _th ; _tr ; _zh ;  _zh_chs
 char Launcher::GameDir[MAX_PATH] = { 0 };
 
 void Launcher::Initialize(HINSTANCE hInstance)
@@ -254,10 +254,8 @@ void Launcher::getshardinfo()
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 
-		Debug("2");
 		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
-		Debug("3");
 		/* Check for errors */
 		if (res != CURLE_OK)
 			Error("curl_easy_perform() failed: %s\n",
@@ -280,10 +278,9 @@ void Launcher::getshardinfo()
 	doc.Parse(output.buffer);
 	tinyxml2::XMLElement* ShardInfo = doc.FirstChildElement("ArrayOfShardInfo")->FirstChildElement("ShardInfo");
 
-	int i = 0;
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-
+		int i = atoi(ShardInfo->FirstChildElement("RegionId")->GetText()) - 1;
 		Debug("%s", ShardInfo->FirstChildElement("RegionId")->GetText());
 		Debug("%s", ShardInfo->FirstChildElement("RegionName")->GetText());
 		Debug("%s", ShardInfo->FirstChildElement("ShardName")->GetText());
@@ -298,14 +295,7 @@ void Launcher::getshardinfo()
 		Debug("in struct[%d] : %s", i, R[i].Name);
 		Debug("in struct[%d] : %s", i, R[i].ShardName);
 		Debug("in struct[%d] : %s", i, R[i].Url);
-
-		i++;
 	}
-
-	Debug("in struct[%d] : %d", 3, R[3].Id);
-	Debug("in struct[%d] : %s", 3, R[3].Name);
-	Debug("in struct[%d] : %s", 3, R[3].ShardName);
-	Debug("in struct[%d] : %s", 3, R[3].Url);
 }
 
 bool Launcher::GetGameDirFromRegistry()
