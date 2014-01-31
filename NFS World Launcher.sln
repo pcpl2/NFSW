@@ -1,8 +1,14 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2013 for Windows Desktop
 VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NFS World Launcher", "NFS World Launcher\NFS World Launcher.vcxproj", "{02C7DFD2-55FA-4169-9653-3ED37C013C30}"
+	ProjectSection(ProjectDependencies) = postProject
+		{68D45502-E159-4432-AA79-A658B3FF4947} = {68D45502-E159-4432-AA79-A658B3FF4947}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LzmaLib", "libs\lzma920\C\Util\LzmaLib\LzmaLib.vcxproj", "{68D45502-E159-4432-AA79-A658B3FF4947}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +20,10 @@ Global
 		{02C7DFD2-55FA-4169-9653-3ED37C013C30}.Debug|Win32.Build.0 = Debug|Win32
 		{02C7DFD2-55FA-4169-9653-3ED37C013C30}.Release|Win32.ActiveCfg = Release|Win32
 		{02C7DFD2-55FA-4169-9653-3ED37C013C30}.Release|Win32.Build.0 = Release|Win32
+		{68D45502-E159-4432-AA79-A658B3FF4947}.Debug|Win32.ActiveCfg = Debug|Win32
+		{68D45502-E159-4432-AA79-A658B3FF4947}.Debug|Win32.Build.0 = Debug|Win32
+		{68D45502-E159-4432-AA79-A658B3FF4947}.Release|Win32.ActiveCfg = Release|Win32
+		{68D45502-E159-4432-AA79-A658B3FF4947}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
