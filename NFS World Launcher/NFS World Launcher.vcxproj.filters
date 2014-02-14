@@ -31,6 +31,9 @@
     <Filter Include="lib\Tinyxml2">
       <UniqueIdentifier>{14a9450b-3d4a-4071-8de9-bb4e33bb2db0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib\HTTP">
+      <UniqueIdentifier>{038ae13b-3df2-4861-9b6e-a4237d71e222}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils.cpp">
@@ -47,6 +50,12 @@
     </ClCompile>
     <ClCompile Include="..\libs\logger\Logger.cpp">
       <Filter>lib\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Downloader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\HTTP\HTTP.cpp">
+      <Filter>lib\HTTP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -94,6 +103,12 @@
     </ClInclude>
     <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h">
       <Filter>lib\Libcurl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Downloader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\HTTP\HTTP.h">
+      <Filter>lib\HTTP</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

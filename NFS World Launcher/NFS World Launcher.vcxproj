@@ -44,7 +44,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -81,8 +81,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\HTTP\HTTP.cpp" />
     <ClCompile Include="..\libs\logger\Logger.cpp" />
     <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp" />
+    <ClCompile Include="Downloader.cpp" />
     <ClCompile Include="Launcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utils.cpp" />
@@ -97,8 +99,10 @@
     <ClInclude Include="..\libs\curl\include\curl\multi.h" />
     <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h" />
     <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h" />
+    <ClInclude Include="..\libs\HTTP\HTTP.h" />
     <ClInclude Include="..\libs\logger\Logger.h" />
     <ClInclude Include="..\libs\tinyxml\tinyxml2.h" />
+    <ClInclude Include="Downloader.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="main.h" />

@@ -6,8 +6,10 @@
 #include <iostream>
 #include <string.h>
 #include <commctrl.h>
+#include <time.h> 
+
+#include <HTTP.h>
 
 #include <Utils.h>
-
-#include <main.h>
+#include <Downloader.h>
 #include <Launcher.h>

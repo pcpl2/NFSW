@@ -29,12 +29,12 @@ private:
 	#define ID_Button3 503
 	#define ID_Button4 504
 
-	static HWND * s_hwWindow;
+	static HWND * Window;
 
-	static HWND * s_hwButtons;
-	static HWND * s_hwEdit;
-	static HWND * s_hwText;
-	static HWND * s_hwCombo;
+	static HWND * Buttons;
+	static HWND * Edit;
+	static HWND * Text;
+	static HWND * Combo;
 
 	static Region * R;
 	static User * Logged;
@@ -64,6 +64,7 @@ public:
 	static void getshardinfo();
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static LRESULT WINAPI DownloadProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI OptionsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 

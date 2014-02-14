@@ -4,11 +4,11 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-HWND * Launcher::s_hwWindow = new HWND[1];
-HWND * Launcher::s_hwButtons = new HWND[4];
-HWND * Launcher::s_hwEdit = new HWND[1];
-HWND * Launcher::s_hwText = new HWND[5];
-HWND * Launcher::s_hwCombo = new HWND[0];
+HWND * Launcher::Window = new HWND[1];
+HWND * Launcher::Buttons = new HWND[4];
+HWND * Launcher::Edit = new HWND[1];
+HWND * Launcher::Text = new HWND[5];
+HWND * Launcher::Combo = new HWND[0];
 
 int Launcher::region;
 
@@ -62,22 +62,24 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	RegisterClassEx(&wc);
 
-//	wc.lpfnWndProc = RegionProc;
-//	wc.lpszClassName = "NFSWL_region";
-//	RegisterClassEx(&wc);
+	wc.lpfnWndProc = DownloadProc;
+	wc.lpszClassName = "NFSWL_download";
+	RegisterClassEx(&wc);
 
-	//_______________________________________________________________________________ main window
-
-	s_hwWindow[0] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_main", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX,CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
-	s_hwButtons[0] = CreateWindowEx(NULL, WC_BUTTON, "Login and Start", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, s_hwWindow[0], (HMENU)ID_Button1, hInstance, NULL);
-	s_hwButtons[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, s_hwWindow[0], (HMENU)ID_Button2, hInstance, NULL);
+	Window[0] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_main", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX,CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
+	Buttons[0] = CreateWindowEx(NULL, WC_BUTTON, "Login", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button1, hInstance, NULL);
+	Buttons[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, Window[0], (HMENU)ID_Button2, hInstance, NULL);
 	strcpy(sz_Login, "Email");
 	strcpy(sz_Password, "Password");
-	s_hwText[0] = CreateWindowEx(NULL, WC_STATIC, "Email :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 20, 35, 80, 25, s_hwWindow[0], NULL, hInstance, NULL);
-	s_hwEdit[0] = CreateWindowEx(NULL, WC_EDIT, sz_Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 50, 200, 25, s_hwWindow[0], NULL, hInstance, NULL);
-	s_hwText[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 35, 80, 25, s_hwWindow[0], 0, hInstance, 0);
-	s_hwEdit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 50, 200, 25, s_hwWindow[0], NULL, hInstance, NULL);
-	s_hwCombo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 10, 150, 200, s_hwWindow[0], NULL, hInstance, NULL);
+	Text[0] = CreateWindowEx(NULL, WC_STATIC, "Email :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 20, 85, 80, 25, Window[0], NULL, hInstance, NULL);
+	Edit[0] = CreateWindowEx(NULL, WC_EDIT, sz_Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 100, 200, 25, Window[0], NULL, hInstance, NULL);
+	Text[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 85, 80, 25, Window[0], 0, hInstance, 0);
+	Edit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
+	Combo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 20, 150, 200, Window[0], NULL, hInstance, NULL);
+
+	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_download", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
+	Buttons[3] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[1], (HMENU)ID_Button3, hInstance, NULL);
+
 
 	for (int i = 0; i < sizeof(R); i++)
 	{
@@ -86,37 +88,37 @@ void Launcher::Initialize(HINSTANCE hInstance)
 		Debug("%s - %s", R[i].ShardName, R[i].Name);
 		sprintf(buffer, "%s - %s", R[i].ShardName, R[i].Name);
 
-		SendMessage(s_hwCombo[0], CB_ADDSTRING, 0, (LPARAM)buffer);
+		SendMessage(Combo[0], CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
 
-	SendMessage(s_hwCombo[0], CB_SETCURSEL, (WPARAM)0, 0);
+	SendMessage(Combo[0], CB_SETCURSEL, (WPARAM)0, 0);
 	
 
 
-	for (int i = 0; i < sizeof(s_hwButtons); i++)
+	for (int i = 0; i < sizeof(Buttons); i++)
 	{
-		if (s_hwButtons[i] == NULL)
+		if (Buttons[i] == NULL)
 			continue;
 
-		SendMessage(s_hwButtons[i], WM_SETFONT, WPARAM(hFont), TRUE);
+		SendMessage(Buttons[i], WM_SETFONT, WPARAM(hFont), TRUE);
 
-		if (s_hwText[i] == NULL)
+		if (Text[i] == NULL)
 			continue;
 
-		SendMessage(s_hwText[i], WM_SETFONT, WPARAM(hFont), TRUE);
+		SendMessage(Text[i], WM_SETFONT, WPARAM(hFont), TRUE);
 
-		if (s_hwEdit[i] == NULL) 
+		if (Edit[i] == NULL) 
 			continue;
 
-		SendMessage(s_hwEdit[i], WM_SETFONT, WPARAM(hFont), TRUE);
+		SendMessage(Edit[i], WM_SETFONT, WPARAM(hFont), TRUE);
 
-		if (s_hwCombo[i] == NULL)
+		if (Combo[i] == NULL)
 			continue;
 
-		SendMessage(s_hwCombo[i], WM_SETFONT, WPARAM(hFont), TRUE);
+		SendMessage(Combo[i], WM_SETFONT, WPARAM(hFont), TRUE);
 	}
 
-	ShowWindow(s_hwWindow[0], SW_SHOWNORMAL);
+	ShowWindow(Window[0], SW_SHOWNORMAL);
 	
 }
 
@@ -172,10 +174,8 @@ bool Launcher::Login(char *login, char *password, char *server, char *region)
 
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 
-		Debug("2");
 		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
-		Debug("3");
 		/* Check for errors */
 		if (res != CURLE_OK)
 		{
@@ -199,10 +199,12 @@ bool Launcher::Login(char *login, char *password, char *server, char *region)
 	}
 	Sleep(50);
 
-	Debug("%s", output.buffer);
+//	Debug("%s", output.buffer);
 
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
+	//if ()
+	//doc.FirstChildElement("EngineExceptionTrans")->FirstChildElement("ErrorCode")->ToText();
 	memcpy(Logged[0].remoteUserId, doc.FirstChildElement("User")->FirstChildElement("remoteUserId")->GetText(), 12);
 	memcpy(Logged[0].securityToken, doc.FirstChildElement("User")->FirstChildElement("securityToken")->GetText(), 50);
 	memcpy(Logged[0].userId, doc.FirstChildElement("User")->FirstChildElement("userId")->GetText(), 10);
@@ -272,7 +274,7 @@ void Launcher::getshardinfo()
 	}
 	Sleep(50);
 
-	Debug("%s", output.buffer);
+//	Debug("%s", output.buffer);
 
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
@@ -281,20 +283,20 @@ void Launcher::getshardinfo()
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
 		int i = atoi(ShardInfo->FirstChildElement("RegionId")->GetText()) - 1;
-		Debug("%s", ShardInfo->FirstChildElement("RegionId")->GetText());
+/*		Debug("%s", ShardInfo->FirstChildElement("RegionId")->GetText());
 		Debug("%s", ShardInfo->FirstChildElement("RegionName")->GetText());
 		Debug("%s", ShardInfo->FirstChildElement("ShardName")->GetText());
 		Debug("%s", ShardInfo->FirstChildElement("Url")->GetText());
-		
+*/		
 		R[i].Id = atoi(ShardInfo->FirstChildElement("RegionId")->GetText());
 		memcpy(R[i].Name, ShardInfo->FirstChildElement("RegionName")->GetText(), 20);
 		memcpy(R[i].ShardName, ShardInfo->FirstChildElement("ShardName")->GetText(), 20);
 		memcpy(R[i].Url, ShardInfo->FirstChildElement("Url")->GetText(), 50);
 
-		Debug("in struct[%d] : %d", i, R[i].Id);
+/*		Debug("in struct[%d] : %d", i, R[i].Id);
 		Debug("in struct[%d] : %s", i, R[i].Name);
 		Debug("in struct[%d] : %s", i, R[i].ShardName);
-		Debug("in struct[%d] : %s", i, R[i].Url);
+		Debug("in struct[%d] : %s", i, R[i].Url);*/
 	}
 }
 
@@ -350,12 +352,14 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		switch (wParam)
 		{
 		case ID_Button1:
-			EnableWindow(s_hwCombo[0], false);
-			region = SendMessage(s_hwCombo[0], CB_GETCURSEL, 0, 0);
-			GetWindowText(s_hwEdit[0], sz_Login, sizeof(sz_Login));
-			GetWindowText(s_hwEdit[1], sz_Password, sizeof(sz_Password));
-			if(Launcher::Login(sz_Login, sz_Password, R[region].Url, R[region].Name))
-				Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
+			EnableWindow(Combo[0], false);
+			region = SendMessage(Combo[0], CB_GETCURSEL, 0, 0);
+			GetWindowText(Edit[0], sz_Login, sizeof(sz_Login));
+			GetWindowText(Edit[1], sz_Password, sizeof(sz_Password));
+			if (Launcher::Login(sz_Login, sz_Password, R[region].Url, R[region].Name))
+				ShowWindow(hwnd, SW_HIDE);
+
+			ShowWindow(Window[1], SW_SHOW);
 			//DestroyWindow(hwnd);
 			break;
 		}
@@ -383,6 +387,41 @@ LRESULT CALLBACK Launcher::OptionsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (wParam)
 		{
+
+		} break;
+		return 0;
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+
+	return 0;
+}
+
+
+LRESULT CALLBACK Launcher::DownloadProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_CREATE:
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_CTLCOLORSTATIC:
+		break;
+
+	case WM_COMMAND:
+		switch (wParam)
+		{
+		case ID_Button3:
+			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
+			DestroyWindow(hwnd);
+			break;
 
 		} break;
 		return 0;
