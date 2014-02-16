@@ -47,8 +47,6 @@ private:
 	static char GameDir[MAX_PATH];
 
 	static HKEY hKey;
-
-	static void InjectDll(HANDLE hProcess, const char * szDllPath);
 public:
 
 	static void Initialize(HINSTANCE hInstance);
@@ -62,6 +60,8 @@ public:
 	static bool GetGameDirFromRegistry();
 
 	static void getshardinfo();
+
+	inline static char* GetGameDir() { return GameDir; };
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI DownloadProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

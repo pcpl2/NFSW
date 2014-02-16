@@ -316,21 +316,6 @@ bool Launcher::GetGameDirFromRegistry()
 	return true;
 }
 
-void Launcher::InjectDll(HANDLE hProcess, const char * szDllPath) //TODO: Error handling
-{
-	size_t sLibPathLen = (strlen(szDllPath) + 1);
-	SIZE_T bytesWritten = 0;
-
-	void * pRmtLibraryPath = VirtualAllocEx(hProcess, NULL, sLibPathLen, MEM_COMMIT, PAGE_READWRITE);
-	WriteProcessMemory(hProcess, pRmtLibraryPath, (void*)szDllPath, sLibPathLen, &bytesWritten);
-	HMODULE hKernel32 = GetModuleHandle("Kernel32");
-	FARPROC pfnLoadLibraryA = GetProcAddress(hKernel32, "LoadLibraryA");
-	HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pfnLoadLibraryA, pRmtLibraryPath, 0, NULL);
-	WaitForSingleObject(hThread, INFINITE);
-	CloseHandle(hThread);
-	VirtualFreeEx(hProcess, pRmtLibraryPath, sizeof(pRmtLibraryPath), MEM_RELEASE);
-}
-
 LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -360,7 +345,6 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				ShowWindow(hwnd, SW_HIDE);
 
 			ShowWindow(Window[1], SW_SHOW);
-			//DestroyWindow(hwnd);
 			break;
 		}
 
