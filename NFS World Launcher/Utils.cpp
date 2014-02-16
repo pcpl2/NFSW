@@ -1,4 +1,5 @@
 #include <includes.h>
+#include <sys/stat.h>
 
 size_t Utils::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
 {
@@ -15,4 +16,10 @@ size_t Utils::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
 		mem->buffer[mem->size] = 0;
 	}
 	return realsize;
+}
+
+bool Utils::FileExists(const char *szPath)
+{
+	struct stat s;
+	return (stat(szPath, &s) == 0);
 }
