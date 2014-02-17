@@ -44,16 +44,16 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\cryptopp562</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;</AdditionalLibraryDirectories>
-      <IgnoreSpecificDefaultLibraries>MSVCRT;</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;..\libs\cryptopp562\Debug\;</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCPMTD;MSVCRT;</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\cryptopp562</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -73,10 +73,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;..\libs\cryptopp562\Release\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

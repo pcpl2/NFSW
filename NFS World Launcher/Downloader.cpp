@@ -47,7 +47,7 @@ void Verify(VerifyCommandArgument param)
 	bool flag1 = false;
 
 	Downloader D;
-	char * FilePath = NULL;
+	char *FilePath = NULL;
 	sprintf(FilePath, "%s/index.xml", ServerPath);
 	tinyxml2::XMLDocument indexFile = &D.GetIndexFile(FilePath, false);
 	/*	if (indexFile = (tinyxml2::XMLDocument) NULL)
@@ -60,6 +60,23 @@ void Verify(VerifyCommandArgument param)
 	int  num31 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("lastcab")->GetText());
 
 	//XmlNodeList xmlNodeList2 = indexFile.SelectNodes("/index/fileinfo");
+
+	char path[MAX_PATH] = { 0 };
+	char path1[MAX_PATH] = { 0 };
+
+	sprintf(path, "%s//%s", Launcher::GetGameDir(), param.PatchPath);
+
+	memcpy(path1, path, MAX_PATH);
+
+	if (sizeof(languagePackage) == 2)
+		sprintf(path1, "%s\\Sound\\Speech", path);
+	else if (sizeof(languagePackage) > 0)
+		sprintf(path1, "%s\\%s", path, languagePackage);
+
+	if (!Utils::FileExists(path1))
+		fullDownload = true;
+	if (!Utils::FileExists(path))
+		CreateDirectory(path, NULL);
 
 	/*
 	          string path1 = Path.Combine(Environment.CurrentDirectory, patchPath);
@@ -81,6 +98,9 @@ void Verify(VerifyCommandArgument param)
             languagePackage = "/" + languagePackage;
 
 	*/
+	if (!languagePackage == NULL)
+		sprintf(languagePackage, "/%s", languagePackage);
+
 	long num4 = 0L;
 	long num5 = 0L;
 	long num6 = 0L;
@@ -91,11 +111,18 @@ void Verify(VerifyCommandArgument param)
 
 	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
 
-/*	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
+	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		char *patch3 = NULL;
-		sprintf(patch3, ShardInfo->FirstChildElement("RegionName")->GetText());
-	}*/
+		char *path3 = { 0 };
+		char *innerText = { 0 };
+		sprintf(path3, ShardInfo->FirstChildElement("path")->GetText());
+		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
+		if (PatchPath == NULL)
+		{
+			int length = strcspn(path3, "/") + 1; //path3.IndexOf("/");
+			//path3 = length < 0 ? patchPath : path3.Replace(path3.Substring(0, length), patchPath);
+		}
+	}
 }
 
 void Downloader::StartVerificationAndDownload(VerifyCommandArgument parameters)
@@ -136,6 +163,18 @@ void Downloader::VerificationAndDownload()
 
 	StartVerificationAndDownload(Vparam);
 
+}
+
+char * Downloader::GetHash(char * File)
+{
+	USING_NAMESPACE(CryptoPP)
+	MD5 hash;
+	char * buffer = new char;
+	std::string output;
+	FileSource f(File, true, new HashFilter(hash,new Base64Encoder(new StringSink(output))));
+	strcpy(buffer, output.c_str());
+	//strrchr(buffer, '\n');
+	return buffer;
 }
 
 tinyxml2::XMLDocument Downloader::GetIndexFile(char * url, bool useCache)

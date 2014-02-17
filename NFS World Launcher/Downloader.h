@@ -67,6 +67,8 @@ public:
 
 	void VerificationAndDownload();
 
+	char * GetHash(char *File);
+
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 
 	tinyxml2::XMLDocument GetIndexFile(char * url, bool useCache);

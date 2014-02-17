@@ -346,6 +346,8 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 			ShowWindow(Window[1], SW_SHOW);
 			break;
+		case ID_Button2:
+			break;
 		}
 
 	default:
@@ -369,10 +371,10 @@ LRESULT CALLBACK Launcher::OptionsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 
 	case WM_COMMAND:
-		switch (wParam)
+		/*switch (wParam)
 		{
 
-		} break;
+		} break;*/
 		return 0;
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
