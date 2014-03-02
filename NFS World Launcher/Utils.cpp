@@ -23,3 +23,9 @@ bool Utils::FileExists(const char *szPath)
 	struct stat s;
 	return (stat(szPath, &s) == 0);
 }
+
+size_t Utils::WriteDataCallback(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+	size_t written;
+	written = fwrite(ptr, size, nmemb, stream);
+	return written;
+}

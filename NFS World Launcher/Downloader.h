@@ -9,7 +9,16 @@ struct VerifyCommandArgument
 	bool ClearHashes;
 	bool WriteHashes;
 	bool Download;
+};
 
+struct FileInfo
+{
+	char *path;
+	char *file;
+	int section;
+	int offset;
+	int lenght;
+	int compressed;
 };
 
 class DownloadCommandArgument
@@ -29,7 +38,8 @@ public:
 class Downloader
 {
 protected:
-	HANDLE Thread;
+	HANDLE ThreadV;
+	HANDLE ThreadD;
 private:
 
 	
@@ -63,15 +73,11 @@ public:
 
 	bool StopFlag;
 
-	void StartVerificationAndDownload(VerifyCommandArgument parameters);
-
-	void VerificationAndDownload();
-
-	char * GetHash(char *File);
+	void StartVerificationAndDownload();
 
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 
-	tinyxml2::XMLDocument GetIndexFile(char * url, bool useCache);
+	char * GetIndexFile(char * url, bool useCache);
 
 };
 

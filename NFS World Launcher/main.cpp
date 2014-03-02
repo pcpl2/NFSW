@@ -10,8 +10,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		PostQuitMessage(0);
 		return 0;
 	}
+	// Debug stuffs
+#ifdef DEBUG
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONIN$", "r", stdin);
+#endif
 	Logger::Init("launcher.log");
 	Launcher::Initialize(hInstance);
 	while (Launcher::Pulse());
+	_CrtDumpMemoryLeaks();
 	return 1;
 }

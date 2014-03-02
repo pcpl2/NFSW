@@ -21,6 +21,14 @@ User * Launcher::Logged = new User[0];
 
 HKEY Launcher::hKey = 0;
 
+/*
+		Links
+		https://94.236.124.241/nfsw/Engine.svc/systeminfo
+		https://94.236.124.241/nfsw/Engine.svc/launcherinfo
+		http://world.needforspeed.com/SpeedAPI/ws/game/nfsw/server/status?locale=EU&shard=apex ???
+
+*/
+
 char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Speed World";
 char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
 char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt"; //GetUserDefaultLangID _de ; _es ; _fr ; _pl ; _pt ; _ru ; _th ; _tr ; _zh ;  _zh_chs
@@ -77,8 +85,9 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	Edit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
 	Combo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 20, 150, 200, Window[0], NULL, hInstance, NULL);
 
-	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_download", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
-	Buttons[3] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[1], (HMENU)ID_Button3, hInstance, NULL);
+//	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_download", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
+	Buttons[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
+	ShowWindow(Buttons[2], SW_HIDE);
 
 
 	for (int i = 0; i < sizeof(R); i++)
@@ -278,6 +287,7 @@ void Launcher::getshardinfo()
 
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
+	free(output.buffer);
 	tinyxml2::XMLElement* ShardInfo = doc.FirstChildElement("ArrayOfShardInfo")->FirstChildElement("ShardInfo");
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
@@ -318,6 +328,7 @@ bool Launcher::GetGameDirFromRegistry()
 
 LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	Downloader D;
 	switch (msg)
 	{
 	case WM_CREATE:
@@ -342,11 +353,23 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			GetWindowText(Edit[0], sz_Login, sizeof(sz_Login));
 			GetWindowText(Edit[1], sz_Password, sizeof(sz_Password));
 			if (Launcher::Login(sz_Login, sz_Password, R[region].Url, R[region].Name))
-				ShowWindow(hwnd, SW_HIDE);
-
-			ShowWindow(Window[1], SW_SHOW);
+			{
+				ShowWindow(Combo[0], SW_HIDE);
+				ShowWindow(Edit[0], SW_HIDE);
+				ShowWindow(Edit[1], SW_HIDE);
+				ShowWindow(Text[1], SW_HIDE);
+				ShowWindow(Text[0], SW_HIDE);
+				ShowWindow(Buttons[0], SW_HIDE);
+				ShowWindow(Buttons[1], SW_HIDE);
+				ShowWindow(Buttons[2], SW_SHOW);
+			}
 			break;
 		case ID_Button2:
+			D.StartVerificationAndDownload(); //debug
+			break;
+		case ID_Button3:
+			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
+			DestroyWindow(hwnd);
 			break;
 		}
 
@@ -404,12 +427,7 @@ LRESULT CALLBACK Launcher::DownloadProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	case WM_COMMAND:
 		switch (wParam)
 		{
-		case ID_Button3:
-			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
-			DestroyWindow(hwnd);
-			break;
-
-		} break;
+		}
 		return 0;
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -418,3 +436,89 @@ LRESULT CALLBACK Launcher::DownloadProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	return 0;
 }
 
+/*
+public void SetRegion(string serverUrl, string userId, string securityToken, int regionId)
+{
+string command = string.Format("/User/SetRegion?userId={0}&regionId={1}", (object) userId, (object) regionId);
+string[][] extraHeaders = new string[4][]
+{
+new string[2]
+{
+"Content-Type",
+"text/xml;charset=utf-8"
+},
+new string[2]
+{
+"Content-Length",
+"0"
+},
+new string[2]
+{
+"userId",
+userId
+},
+new string[2]
+{
+"securityToken",
+securityToken
+}
+};
+this.DoCall(serverUrl, command, (string[]) null, extraHeaders, RequestMethod.POST);
+}
+}
+*/
+
+/*
+private void LoadWebStore(string remoteUserId, string webAuthKey)
+{
+this.remoteUserId = remoteUserId;
+this.webAuthKey = webAuthKey;
+if (!this.parentForm.PortalUp)
+return;
+string str = ShardManager.ShardUrl;
+string[] strArray = str.Split(new char[1]
+{
+'/'
+});
+if (strArray.Length > 3)
+str = strArray[2] + "/" + strArray[3];
+this.wWebBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(this.HandleWebBrowserDocumentLoaded);
+this.wWebBrowser.Navigate(new Uri(this.parentForm.PortalDomain + "/webkit/lp/store?locale=" + CultureInfo.CurrentCulture.Name.Replace('-', '_')), "", (byte[]) null, string.Format("userId: {0}{4}token: {1}{4}shard: {2}{4}worldserverurl: {3}{4}User-Agent: {5}", (object) remoteUserId, (object) webAuthKey, (object) ShardManager.ShardName, (object) str, (object) Environment.NewLine, (object) "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2; MS-RTC LM 8; .NET4.0C; .NET4.0E)"));
+this.wWebBrowser.Visible = true;
+remoteUserId = string.Empty;
+webAuthKey = string.Empty;
+}
+
+*/
+
+/*
+private string GetWebSecurityToken()
+{
+string xml = new WebServicesWrapper().DoCall(ShardManager.ShardUrl, "/security/generatewebtoken", (string[]) null, new string[4][]
+{
+new string[2]
+{
+"Content-Type",
+"text/xml;charset=utf-8"
+},
+new string[2]
+{
+"Content-Length",
+"0"
+},
+new string[2]
+{
+"userId",
+this.mUserId
+},
+new string[2]
+{
+"securityToken",
+this.mAuthKey
+}
+}, (string) null, RequestMethod.POST);
+XmlDocument xmlDocument = new XmlDocument();
+xmlDocument.LoadXml(xml);
+return xmlDocument.InnerText;
+}
+*/
