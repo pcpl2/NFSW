@@ -11,7 +11,7 @@ Downloader::~Downloader()
 
 }
 
-void Download(DownloadTheard *DT)
+void Download(DownloadThread *DT)
 {
 	//http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/section1075.dat nfsw.exe
 
@@ -251,7 +251,7 @@ void Verify(VerifyCommandArgument *param)
 		Debug("Verify : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->path, FI[s]->file, FI[s]->section, FI[s]->offset, FI[s]->lenght, FI[s]->compressed);
 	}
 
-	DownloadTheard *DT = new DownloadTheard;
+	DownloadThread *DT = new DownloadThread;
 
 	DT->path = (char *)malloc(MAX_PATH);
 	strcpy(DT->path, path);

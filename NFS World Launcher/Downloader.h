@@ -21,7 +21,7 @@ struct FileInfo
 	int compressed;
 };
 
-struct DownloadTheard
+struct DownloadThread
 {
 	short i;
 	FileInfo **FI;
