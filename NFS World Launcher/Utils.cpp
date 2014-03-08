@@ -1,4 +1,9 @@
 #include <includes.h>
+#ifdef WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 size_t Utils::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
@@ -18,10 +23,20 @@ size_t Utils::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *da
 	return realsize;
 }
 
-bool Utils::FileExists(const char *szPath)
+int Utils::FileExists(const char *szPath)
 {
+	/*
 	struct stat s;
-	return (stat(szPath, &s) == 0);
+	if (stat(szPath, &s) == 0)
+		return 1;
+	else
+		return 0;*/
+#ifdef WIN32
+	return !access(szPath, 0);   
+#else
+	return !access(szPath, F_OK);   
+#endif
+
 }
 
 size_t Utils::WriteDataCallback(void *ptr, size_t size, size_t nmemb, FILE *stream) {

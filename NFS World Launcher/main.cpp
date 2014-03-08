@@ -19,6 +19,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Logger::Init("launcher.log");
 	Launcher::Initialize(hInstance);
 	while (Launcher::Pulse());
+	Launcher::remove();
 	_CrtDumpMemoryLeaks();
 	return 1;
 }

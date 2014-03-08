@@ -70,10 +70,6 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	RegisterClassEx(&wc);
 
-	wc.lpfnWndProc = DownloadProc;
-	wc.lpszClassName = "NFSWL_download";
-	RegisterClassEx(&wc);
-
 	Window[0] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_main", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX,CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
 	Buttons[0] = CreateWindowEx(NULL, WC_BUTTON, "Login", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button1, hInstance, NULL);
 	Buttons[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, Window[0], (HMENU)ID_Button2, hInstance, NULL);
@@ -85,7 +81,6 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	Edit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
 	Combo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 20, 150, 200, Window[0], NULL, hInstance, NULL);
 
-//	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_download", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
 	Buttons[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
 	ShowWindow(Buttons[2], SW_HIDE);
 
@@ -172,7 +167,7 @@ bool Launcher::Login(char *login, char *password, char *server, char *region)
 		curl_easy_setopt(curl, CURLOPT_HEADER, 1);
 
 		curl_easy_setopt(curl, CURLOPT_URL, url);
-		Info("Connect to %s", url);
+		Debug("Connect to %s", url);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)-1);
 
@@ -257,7 +252,7 @@ void Launcher::getshardinfo()
 	{
 
 		curl_easy_setopt(curl, CURLOPT_URL, "https://94.236.124.241/nfsw/Engine.svc/getshardinfo");
-		Info("Connect to https://94.236.124.241/nfsw/Engine.svc/getshardinfo");
+		Debug("Connect to https://94.236.124.241/nfsw/Engine.svc/getshardinfo");
 
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
@@ -283,8 +278,6 @@ void Launcher::getshardinfo()
 	}
 	Sleep(50);
 
-//	Debug("%s", output.buffer);
-
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
 	free(output.buffer);
@@ -292,21 +285,11 @@ void Launcher::getshardinfo()
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		int i = atoi(ShardInfo->FirstChildElement("RegionId")->GetText()) - 1;
-/*		Debug("%s", ShardInfo->FirstChildElement("RegionId")->GetText());
-		Debug("%s", ShardInfo->FirstChildElement("RegionName")->GetText());
-		Debug("%s", ShardInfo->FirstChildElement("ShardName")->GetText());
-		Debug("%s", ShardInfo->FirstChildElement("Url")->GetText());
-*/		
+		int i = atoi(ShardInfo->FirstChildElement("RegionId")->GetText()) - 1;	
 		R[i].Id = atoi(ShardInfo->FirstChildElement("RegionId")->GetText());
 		memcpy(R[i].Name, ShardInfo->FirstChildElement("RegionName")->GetText(), 20);
 		memcpy(R[i].ShardName, ShardInfo->FirstChildElement("ShardName")->GetText(), 20);
 		memcpy(R[i].Url, ShardInfo->FirstChildElement("Url")->GetText(), 50);
-
-/*		Debug("in struct[%d] : %d", i, R[i].Id);
-		Debug("in struct[%d] : %s", i, R[i].Name);
-		Debug("in struct[%d] : %s", i, R[i].ShardName);
-		Debug("in struct[%d] : %s", i, R[i].Url);*/
 	}
 }
 
@@ -406,34 +389,17 @@ LRESULT CALLBACK Launcher::OptionsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	return 0;
 }
 
-
-LRESULT CALLBACK Launcher::DownloadProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void Launcher::remove()
 {
-	switch (msg)
-	{
-	case WM_CREATE:
-		break;
-	case WM_CLOSE:
-		DestroyWindow(hwnd);
-		break;
+	delete[] R;
+	delete[] Logged;
+	/*HWND * Launcher::Window = new HWND[1];
+HWND * Launcher::Buttons = new HWND[4];
+HWND * Launcher::Edit = new HWND[1];
+HWND * Launcher::Text = new HWND[5];
+HWND * Launcher::Combo = new HWND[0];*/
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
 
-	case WM_CTLCOLORSTATIC:
-		break;
-
-	case WM_COMMAND:
-		switch (wParam)
-		{
-		}
-		return 0;
-	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}
-
-	return 0;
 }
 
 /*

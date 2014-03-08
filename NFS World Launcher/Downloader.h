@@ -21,18 +21,11 @@ struct FileInfo
 	int compressed;
 };
 
-class DownloadCommandArgument
+struct DownloadTheard
 {
-public:
-	char *Package;
-
-	char *PatchPath;
-
-	DownloadCommandArgument(char *package, char *patchPath)
-	{
-		DownloadCommandArgument::Package = package;
-		DownloadCommandArgument::PatchPath = patchPath;
-	}
+	short i;
+	FileInfo **FI;
+	char *path;
 };
 
 class Downloader

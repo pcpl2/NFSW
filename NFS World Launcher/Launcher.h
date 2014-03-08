@@ -51,6 +51,8 @@ public:
 
 	static void Initialize(HINSTANCE hInstance);
 
+	static void remove();
+
 	static bool Pulse();
 
 	static bool Login(char *login, char *password, char *server, char *region);
@@ -64,7 +66,6 @@ public:
 	inline static char* GetGameDir() { return GameDir; };
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT WINAPI DownloadProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI OptionsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
