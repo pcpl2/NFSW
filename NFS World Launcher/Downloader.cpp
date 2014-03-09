@@ -146,6 +146,7 @@ void Verify(VerifyCommandArgument *param)
 
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/TracksHigh/index.xml
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
+	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/Tracks/index.xml
 	Downloader::SetVerifying(true);
 	char ServerPath[128] = { 0 };
 	char languagePackage[128] = { 0 };
