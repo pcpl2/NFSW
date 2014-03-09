@@ -15,17 +15,108 @@ void Download(DownloadThread *DT)
 {
 	//http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/section1075.dat nfsw.exe
 
-	FileInfo **FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
 	short i = 0;
+	char *DefaultTempPath = new char[MAX_PATH];
+	char *TempPath = new char[MAX_PATH];
 
 	i = DT->i;
-	memcpy(FI, DT->FI, sizeof(sizeof(FileInfo*)* 100));
 
-	Debug("Download : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[3]->path, FI[3]->file, FI[3]->section, FI[3]->offset, FI[3]->lenght, FI[3]->compressed);
+	GetTempPath(MAX_PATH, (LPSTR)DefaultTempPath);
+
+	sprintf(TempPath, "%s\\nfswl\\", DefaultTempPath);
+	Debug("%s\n%s\n", DefaultTempPath, TempPath);
+
+	if (!Utils::FileExists(TempPath))
+		CreateDirectory(TempPath, NULL);
 
 	for (short s = 0; s < i; s++)
 	{
-		Debug("Download : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->path, FI[s]->file, FI[s]->section, FI[s]->offset, FI[s]->lenght, FI[s]->compressed);
+		CURL *curl;
+		FILE *fp;
+		CURLcode res;
+		char *DatFile = new char[FILENAME_MAX];
+		char *DatFileInTemp = new char[FILENAME_MAX];
+		char *File = new char[FILENAME_MAX];
+		char Url[256];
+		size_t result;
+
+		sprintf(DatFile, "section%d.dat", DT->FI[s]->section);
+
+		Debug("Download : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\nDatFile : %s\n", DT->FI[s]->path, DT->FI[s]->file, DT->FI[s]->section, DT->FI[s]->offset, DT->FI[s]->lenght, DT->FI[s]->compressed, DatFile);
+
+		sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/%s", DatFile);
+		sprintf(DatFileInTemp, "%s%s", TempPath, DatFile);
+		curl = curl_easy_init();
+		if (!Utils::FileExists(DatFileInTemp))
+		{
+			if (curl) 
+			{
+				fp = fopen(DatFileInTemp, "wb");
+				curl_easy_setopt(curl, CURLOPT_URL, Url);
+				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
+				curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+				res = curl_easy_perform(curl);
+				/* always cleanup */
+				curl_easy_cleanup(curl);
+				fclose(fp);
+			}
+		}
+		delete DatFile;
+		if (strcmp(DT->FI[s]->path, "") != 0)
+			sprintf(File, "%s\\%s\\%s", DT->path, DT->FI[s]->path, DT->FI[s]->file);
+		else
+			sprintf(File, "%s\\%s", DT->path, DT->FI[s]->file);
+
+		SizeT srcLen = DT->FI[s]->compressed - 13;
+
+		SizeT destLen = DT->FI[s]->lenght;
+
+/*		unsigned char* Decomress = new unsigned char[srcLen];
+
+		unsigned char* Lzma = new unsigned char[srcLen];
+
+		fp = fopen(DatFileInTemp, "rb");
+
+		result = fread(Lzma, 1, destLen, fp);
+
+		if (result != destLen)
+			Debug("Reading error");
+		
+		unsigned char prop[5] =
+		{
+			0
+		};
+		
+		fclose(fp);
+		int ok = LzmaUncompress(Decomress, &srcLen, Lzma, &destLen, prop, LZMA_PROPS_SIZE);*/
+		delete DatFileInTemp;
+
+		/*
+		    public static string DecompressLZMA(byte[] compressedFile)
+    {
+      IntPtr srcLen = new IntPtr(compressedFile.Length - 13);
+      byte[] src = new byte[srcLen.ToInt64()];
+      IntPtr outPropsSize = new IntPtr(5);
+      byte[] outProps = new byte[5];
+      compressedFile.CopyTo((Array) src, 13);
+      for (int index = 0; index < 5; ++index)
+        outProps[index] = compressedFile[index];
+      int length = 0;
+      for (int index = 0; index < 8; ++index)
+        length += (int) compressedFile[index + 5] << 8 * index;
+      IntPtr destLen = new IntPtr(length);
+      byte[] numArray = new byte[length];
+      int errorCode = UnsafeNativeMethods.LzmaUncompress(numArray, ref destLen, src, ref srcLen, outProps, outPropsSize);
+      if (errorCode != 0)
+      {
+        Downloader.mLogger.Fatal((object) ("Decompression returned " + (object) errorCode));
+        throw new UncompressionException(errorCode, string.Format(ResourceWrapper.Instance.GetString("GameLauncher.LanguageStrings", "DOWNLOADER00002"), (object) errorCode));
+      }
+      else
+        return new string(Encoding.UTF8.GetString(numArray).ToCharArray());
+    }
+		
+		*/
 	}
 
 
@@ -52,6 +143,9 @@ void Verify(VerifyCommandArgument *param)
 	Download true
 	*/
 
+
+	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/TracksHigh/index.xml
+	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
 	Downloader::SetVerifying(true);
 	char ServerPath[128] = { 0 };
 	char languagePackage[128] = { 0 };
@@ -179,14 +273,15 @@ void Verify(VerifyCommandArgument *param)
 			if (strcmp(Hash, HashSvr) != 0)
 			{
 				Debug("FILE : %s Hash nie jest taki sam\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-			//	sprintf(DatFile, "section%d.dat", atol(ShardInfo->FirstChildElement("section")->GetText()));
 				i++;
 				if (!FI)
 				{	
 					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->path = (char *)malloc(sizeof(char*));
+					FI[0]->path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->path, 0, MAX_PATH);
 					strcpy(FI[0]->path, path4);
-					FI[0]->file = (char *)malloc(sizeof(char*));
+					FI[0]->file = (char *)malloc(MAX_PATH);
+					memset(FI[0]->file, 0, MAX_PATH);
 					strcpy(FI[0]->file, innerText);
 					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
 					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
@@ -196,9 +291,11 @@ void Verify(VerifyCommandArgument *param)
 				else
 				{
 					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->path = (char *)malloc(sizeof(char*));
+					FI[i - 1]->path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->path, 0, MAX_PATH);
 					strcpy(FI[i - 1]->path, path4);
-					FI[i - 1]->file = (char *)malloc(sizeof(char*));
+					FI[i - 1]->file = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->file, 0, MAX_PATH);
 					strcpy(FI[i - 1]->file, innerText);
 					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
 					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
@@ -218,9 +315,11 @@ void Verify(VerifyCommandArgument *param)
 			if (!FI)
 			{
 				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->path = (char *)malloc(sizeof(char*));
+				FI[0]->path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->path, 0, MAX_PATH);
 				strcpy(FI[0]->path, path4);
-				FI[0]->file = (char *)malloc(sizeof(char*));
+				FI[0]->file = (char *)malloc(MAX_PATH);
+				memset(FI[0]->file, 0, MAX_PATH);
 				strcpy(FI[0]->file, innerText);
 				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
 				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
@@ -230,9 +329,11 @@ void Verify(VerifyCommandArgument *param)
 			else
 			{
 				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->path = (char *)malloc(sizeof(char*));
+				FI[i - 1]->path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->path, 0, MAX_PATH);
 				strcpy(FI[i - 1]->path, path4);
-				FI[i - 1]->file = (char *)malloc(sizeof(char*));
+				FI[i - 1]->file = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->file, 0, MAX_PATH);
 				strcpy(FI[i - 1]->file, innerText);
 				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
 				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
@@ -256,9 +357,8 @@ void Verify(VerifyCommandArgument *param)
 	DT->path = (char *)malloc(MAX_PATH);
 	strcpy(DT->path, path);
 	DT->i = i;
-	DT->FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
-	memcpy(DT->FI, FI, sizeof(sizeof(FileInfo*)* 100));
-
+	DT->FI = (FileInfo**)malloc(sizeof(FileInfo)* 100);
+	memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)DT, 0, 0);
 
