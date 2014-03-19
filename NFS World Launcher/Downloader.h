@@ -1,38 +1,34 @@
 #pragma once
 
-struct VerifyCommandArgument
+struct VerifyArgument
 {
 	char *ServerPath;
 	char *Package;
-	char *PatchPath;
 	bool FullDownload;
-	bool StopOnFail;
-	bool ClearHashes;
-	bool Download;
 };
 
 struct FileInfo
 {
-	char *path;
-	char *file;
-	int section;
-	int offset;
-	int lenght;
-	int compressed;
+	char *Path;
+	char *File;
+	int Section;
+	int Offset;
+	int Lenght;
+	int Compressed;
+	bool LanguagePackage;
 };
 
 struct DownloadThread
 {
 	short i;
 	FileInfo **FI;
-	char *path;
+	char *Path;
 };
 
 class Downloader
 {
 protected:
 	HANDLE ThreadV;
-	HANDLE ThreadD;
 private:
 	static Downloader instance;
 
@@ -52,8 +48,6 @@ private:
 	const int LZMAOutPropsSize = 5;
 	const int LZMALengthSize = 8;
 	const int LZMAHeaderSize = 13;
-	const int DownloadThreads = 3;
-	const int DownloadChunks = 16;
 	*/
 public:
 	Downloader();

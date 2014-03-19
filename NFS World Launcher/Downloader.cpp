@@ -13,13 +13,11 @@ Downloader::~Downloader()
 
 void Download(DownloadThread *DT)
 {
-	//http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/section1075.dat nfsw.exe
+	//http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/Section1075.dat nfsw.exe
 
-	short i = 0;
+	short i = DT->i;
 	char *DefaultTempPath = new char[MAX_PATH];
 	char *TempPath = new char[MAX_PATH];
-
-	i = DT->i;
 
 	GetTempPath(MAX_PATH, (LPSTR)DefaultTempPath);
 
@@ -37,39 +35,68 @@ void Download(DownloadThread *DT)
 		char *DatFile = new char[FILENAME_MAX];
 		char *DatFileInTemp = new char[FILENAME_MAX];
 		char *File = new char[FILENAME_MAX];
+		char *TempPathFile = new char[MAX_PATH];
 		char Url[256];
 		size_t result;
+		int FromSection;
+		int val2 = 1;
+		int num7;
 
-		sprintf(DatFile, "section%d.dat", DT->FI[s]->section);
+		sprintf(TempPathFile, "%s\\%s\\", TempPath, DT->FI[s]->File);
+		if (!Utils::FileExists(TempPathFile))
+			CreateDirectory(TempPathFile, NULL);
 
-		Debug("Download : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\nDatFile : %s\n", DT->FI[s]->path, DT->FI[s]->file, DT->FI[s]->section, DT->FI[s]->offset, DT->FI[s]->lenght, DT->FI[s]->compressed, DatFile);
+		Debug("Download : \npath : %s\nfile : %s\nSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
+		
+		num7 = DT->FI[s+1]->Section;
+		FromSection = DT->FI[s]->Section;
+		val2 = FromSection;
+		if (DT->FI[s]->Offset == 0)
+			--num7;
 
-		sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/%s", DatFile);
-		sprintf(DatFileInTemp, "%s%s", TempPath, DatFile);
-		curl = curl_easy_init();
-		if (!Utils::FileExists(DatFileInTemp))
+		for (; val2 <= num7; ++val2)
 		{
-			if (curl) 
+			sprintf(DatFile, "Section%d.dat", val2);
+			Debug("Section%d.dat", val2);
+
+			if (DT->FI[s]->LanguagePackage)
 			{
-				fp = fopen(DatFileInTemp, "wb");
-				curl_easy_setopt(curl, CURLOPT_URL, Url);
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-				res = curl_easy_perform(curl);
-				/* always cleanup */
-				curl_easy_cleanup(curl);
-				fclose(fp);
+				sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/%s", DatFile);
 			}
+			else
+			{
+				sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/%s", DatFile);
+			}
+
+			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
+			curl = curl_easy_init();
+			if (!Utils::FileExists(DatFileInTemp))
+			{
+				if (curl)
+				{
+					fp = fopen(DatFileInTemp, "wb");
+					curl_easy_setopt(curl, CURLOPT_URL, Url);
+					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+					res = curl_easy_perform(curl);
+					/* always cleanup */
+					curl_easy_cleanup(curl);
+					fclose(fp);
+				}
+			}
+			
 		}
+
 		delete DatFile;
-		if (strcmp(DT->FI[s]->path, "") != 0)
-			sprintf(File, "%s\\%s\\%s", DT->path, DT->FI[s]->path, DT->FI[s]->file);
+
+		if (strcmp(DT->FI[s]->Path, "") != 0)
+			sprintf(File, "%s\\%s\\%s", DT->Path, DT->FI[s]->Path, DT->FI[s]->File);
 		else
-			sprintf(File, "%s\\%s", DT->path, DT->FI[s]->file);
+			sprintf(File, "%s\\%s", DT->Path, DT->FI[s]->File);
 
-		SizeT srcLen = DT->FI[s]->compressed - 13;
+		SizeT srcLen = DT->FI[s]->Compressed - 13;
 
-		SizeT destLen = DT->FI[s]->lenght;
+		SizeT destLen = DT->FI[s]->Lenght;
 
 		unsigned char* Decomress = new unsigned char[srcLen];
 
@@ -141,22 +168,16 @@ void Download(DownloadThread *DT)
 
 }
 
-void Verify(VerifyCommandArgument *param)
+void Verify(VerifyArgument *param)
 {
 	/*
 	ServerPath  http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client
 	Package
 	PatchPath Data
 	StopOnFail false
-	ClearHashes false
-	WriteHashes false
 	Download true
 	*/
-
-
-	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/TracksHigh/index.xml //full
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
-	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/Tracks/index.xml
 	USING_NAMESPACE(CryptoPP)
 	USING_NAMESPACE(Weak1)
 
@@ -191,7 +212,7 @@ void Verify(VerifyCommandArgument *param)
 	int  num3 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("firstcab")->GetText());
 	int  num31 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("lastcab")->GetText());
 
-	sprintf(path, "%s\\%s", Launcher::GetGameDir(), param->PatchPath);
+	sprintf(path, "%s\\Data", Launcher::GetGameDir());
 
 	memcpy(path1, path, MAX_PATH);
 
@@ -243,30 +264,32 @@ void Verify(VerifyCommandArgument *param)
 				if (!FI)
 				{	
 					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->path, 0, MAX_PATH);
-					strcpy(FI[0]->path, path4);
-					FI[0]->file = (char *)malloc(MAX_PATH);
-					memset(FI[0]->file, 0, MAX_PATH);
-					strcpy(FI[0]->file, innerText);
-					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->Path, 0, MAX_PATH);
+					strcpy(FI[0]->Path, path4);
+					FI[0]->File = (char *)malloc(MAX_PATH);
+					memset(FI[0]->File, 0, MAX_PATH);
+					strcpy(FI[0]->File, innerText);
+					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->LanguagePackage = false;
 				}
 				else
 				{
 					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->path, path4);
-					FI[i - 1]->file = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->file, 0, MAX_PATH);
-					strcpy(FI[i - 1]->file, innerText);
-					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->Path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->Path, path4);
+					FI[i - 1]->File = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->File, 0, MAX_PATH);
+					strcpy(FI[i - 1]->File, innerText);
+					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->LanguagePackage = false;
 				}
 			}
 			else
@@ -281,30 +304,32 @@ void Verify(VerifyCommandArgument *param)
 			if (!FI)
 			{
 				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->path, 0, MAX_PATH);
-				strcpy(FI[0]->path, path4);
-				FI[0]->file = (char *)malloc(MAX_PATH);
-				memset(FI[0]->file, 0, MAX_PATH);
-				strcpy(FI[0]->file, innerText);
-				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->Path, 0, MAX_PATH);
+				strcpy(FI[0]->Path, path4);
+				FI[0]->File = (char *)malloc(MAX_PATH);
+				memset(FI[0]->File, 0, MAX_PATH);
+				strcpy(FI[0]->File, innerText);
+				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->LanguagePackage = false;
 			}
 			else
 			{
 				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->path, path4);
-				FI[i - 1]->file = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->file, 0, MAX_PATH);
-				strcpy(FI[i - 1]->file, innerText);
-				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->Path, 0, MAX_PATH);
+				strcpy(FI[i - 1]->Path, path4);
+				FI[i - 1]->File = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->File, 0, MAX_PATH);
+				strcpy(FI[i - 1]->File, innerText);
+				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->LanguagePackage = false;
 			}
 		}
 
@@ -371,30 +396,32 @@ void Verify(VerifyCommandArgument *param)
 				if (!FI)
 				{
 					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->path, 0, MAX_PATH);
-					strcpy(FI[0]->path, path4);
-					FI[0]->file = (char *)malloc(MAX_PATH);
-					memset(FI[0]->file, 0, MAX_PATH);
-					strcpy(FI[0]->file, innerText);
-					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->Path, 0, MAX_PATH);
+					strcpy(FI[0]->Path, path4);
+					FI[0]->File = (char *)malloc(MAX_PATH);
+					memset(FI[0]->File, 0, MAX_PATH);
+					strcpy(FI[0]->File, innerText);
+					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->LanguagePackage = true;
 				}
 				else
 				{
 					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->path, path4);
-					FI[i - 1]->file = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->file, 0, MAX_PATH);
-					strcpy(FI[i - 1]->file, innerText);
-					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->Path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->Path, path4);
+					FI[i - 1]->File = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->File, 0, MAX_PATH);
+					strcpy(FI[i - 1]->File, innerText);
+					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->LanguagePackage = true;
 				}
 			}
 			else
@@ -409,30 +436,32 @@ void Verify(VerifyCommandArgument *param)
 			if (!FI)
 			{
 				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->path, 0, MAX_PATH);
-				strcpy(FI[0]->path, path4);
-				FI[0]->file = (char *)malloc(MAX_PATH);
-				memset(FI[0]->file, 0, MAX_PATH);
-				strcpy(FI[0]->file, innerText);
-				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->Path, 0, MAX_PATH);
+				strcpy(FI[0]->Path, path4);
+				FI[0]->File = (char *)malloc(MAX_PATH);
+				memset(FI[0]->File, 0, MAX_PATH);
+				strcpy(FI[0]->File, innerText);
+				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->LanguagePackage = true;
 			}
 			else
 			{
 				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->path, path4);
-				FI[i - 1]->file = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->file, 0, MAX_PATH);
-				strcpy(FI[i - 1]->file, innerText);
-				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->Path, 0, MAX_PATH);
+				strcpy(FI[i - 1]->Path, path4);
+				FI[i - 1]->File = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->File, 0, MAX_PATH);
+				strcpy(FI[i - 1]->File, innerText);
+				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->LanguagePackage = true;
 			}
 		}
 
@@ -497,30 +526,32 @@ void Verify(VerifyCommandArgument *param)
 				if (!FI)
 				{
 					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->path, 0, MAX_PATH);
-					strcpy(FI[0]->path, path4);
-					FI[0]->file = (char *)malloc(MAX_PATH);
-					memset(FI[0]->file, 0, MAX_PATH);
-					strcpy(FI[0]->file, innerText);
-					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->Path, 0, MAX_PATH);
+					strcpy(FI[0]->Path, path4);
+					FI[0]->File = (char *)malloc(MAX_PATH);
+					memset(FI[0]->File, 0, MAX_PATH);
+					strcpy(FI[0]->File, innerText);
+					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->LanguagePackage = false;
 				}
 				else
 				{
 					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->path, path4);
-					FI[i - 1]->file = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->file, 0, MAX_PATH);
-					strcpy(FI[i - 1]->file, innerText);
-					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->Path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->Path, path4);
+					FI[i - 1]->File = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->File, 0, MAX_PATH);
+					strcpy(FI[i - 1]->File, innerText);
+					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->LanguagePackage = false;
 				}
 			}
 			else
@@ -535,30 +566,32 @@ void Verify(VerifyCommandArgument *param)
 			if (!FI)
 			{
 				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->path, 0, MAX_PATH);
-				strcpy(FI[0]->path, path4);
-				FI[0]->file = (char *)malloc(MAX_PATH);
-				memset(FI[0]->file, 0, MAX_PATH);
-				strcpy(FI[0]->file, innerText);
-				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->Path, 0, MAX_PATH);
+				strcpy(FI[0]->Path, path4);
+				FI[0]->File = (char *)malloc(MAX_PATH);
+				memset(FI[0]->File, 0, MAX_PATH);
+				strcpy(FI[0]->File, innerText);
+				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[0]->LanguagePackage = false;
 			}
 			else
 			{
 				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->path, path4);
-				FI[i - 1]->file = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->file, 0, MAX_PATH);
-				strcpy(FI[i - 1]->file, innerText);
-				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->Path, 0, MAX_PATH);
+				strcpy(FI[i - 1]->Path, path4);
+				FI[i - 1]->File = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->File, 0, MAX_PATH);
+				strcpy(FI[i - 1]->File, innerText);
+				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				FI[i - 1]->LanguagePackage = false;
 			}
 		}
 
@@ -625,30 +658,32 @@ void Verify(VerifyCommandArgument *param)
 					if (!FI)
 					{
 						FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-						FI[0]->path = (char *)malloc(MAX_PATH);
-						memset(FI[0]->path, 0, MAX_PATH);
-						strcpy(FI[0]->path, path4);
-						FI[0]->file = (char *)malloc(MAX_PATH);
-						memset(FI[0]->file, 0, MAX_PATH);
-						strcpy(FI[0]->file, innerText);
-						FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-						FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-						FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+						FI[0]->Path = (char *)malloc(MAX_PATH);
+						memset(FI[0]->Path, 0, MAX_PATH);
+						strcpy(FI[0]->Path, path4);
+						FI[0]->File = (char *)malloc(MAX_PATH);
+						memset(FI[0]->File, 0, MAX_PATH);
+						strcpy(FI[0]->File, innerText);
+						FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+						FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+						FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+						FI[0]->LanguagePackage = false;
 					}
 					else
 					{
 						FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-						FI[i - 1]->path = (char *)malloc(MAX_PATH);
-						memset(FI[i - 1]->path, 0, MAX_PATH);
-						strcpy(FI[i - 1]->path, path4);
-						FI[i - 1]->file = (char *)malloc(MAX_PATH);
-						memset(FI[i - 1]->file, 0, MAX_PATH);
-						strcpy(FI[i - 1]->file, innerText);
-						FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-						FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-						FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+						FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+						memset(FI[i - 1]->Path, 0, MAX_PATH);
+						strcpy(FI[i - 1]->Path, path4);
+						FI[i - 1]->File = (char *)malloc(MAX_PATH);
+						memset(FI[i - 1]->File, 0, MAX_PATH);
+						strcpy(FI[i - 1]->File, innerText);
+						FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+						FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+						FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+						FI[i - 1]->LanguagePackage = false;
 					}
 				}
 				else
@@ -663,30 +698,32 @@ void Verify(VerifyCommandArgument *param)
 				if (!FI)
 				{
 					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->path, 0, MAX_PATH);
-					strcpy(FI[0]->path, path4);
-					FI[0]->file = (char *)malloc(MAX_PATH);
-					memset(FI[0]->file, 0, MAX_PATH);
-					strcpy(FI[0]->file, innerText);
-					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->Path, 0, MAX_PATH);
+					strcpy(FI[0]->Path, path4);
+					FI[0]->File = (char *)malloc(MAX_PATH);
+					memset(FI[0]->File, 0, MAX_PATH);
+					strcpy(FI[0]->File, innerText);
+					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[0]->LanguagePackage = false;
 				}
 				else
 				{
 					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->path, path4);
-					FI[i - 1]->file = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->file, 0, MAX_PATH);
-					strcpy(FI[i - 1]->file, innerText);
-					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->Path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->Path, path4);
+					FI[i - 1]->File = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->File, 0, MAX_PATH);
+					strcpy(FI[i - 1]->File, innerText);
+					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					FI[i - 1]->LanguagePackage = false;
 				}
 			}
 
@@ -698,13 +735,13 @@ void Verify(VerifyCommandArgument *param)
 
 	for (short s = 0; s < i; s++)
 	{
-		Debug("Verify : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->path, FI[s]->file, FI[s]->section, FI[s]->offset, FI[s]->lenght, FI[s]->compressed);
+		Debug("Verify : \npath : %s\nfile : %s\nSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
 	}
 
 	DownloadThread *DT = new DownloadThread;
 
-	DT->path = (char *)malloc(MAX_PATH);
-	strcpy(DT->path, path);
+	DT->Path = (char *)malloc(MAX_PATH);
+	strcpy(DT->Path, path);
 	DT->i = i;
 	DT->FI = (FileInfo**)malloc(sizeof(FileInfo)* 100);
 	memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
@@ -718,25 +755,11 @@ void Verify(VerifyCommandArgument *param)
 
 void Downloader::StartVerificationAndDownload(bool FullD)
 {
-	/*
-	ServerPath  http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client
-	Package
-	PatchPath Data
-	StopOnFail false
-	ClearHashes false
-	WriteHashes false
-	Download true
-	*/
-
-	VerifyCommandArgument *Vparam = new VerifyCommandArgument;
+	VerifyArgument *Vparam = new VerifyArgument;
 
 	Vparam->ServerPath = "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client";
-	Vparam->PatchPath = "Data";
 	Vparam->Package = "en"; //en ; de ; es ; fr ; ru ; 
 	Vparam->FullDownload = FullD;
-	Vparam->StopOnFail = false;
-	Vparam->ClearHashes = false;
-	Vparam->Download = true;
 
 	Info("Starting verify");
 	StopFlag = false;
@@ -753,52 +776,39 @@ void Downloader::StartVerificationAndDownload(bool FullD)
 
 char *Downloader::GetIndexFile(char * url, bool useCache)
 {
+	Debug("Downloading %s", url);
+	CURL *curl;
+	CURLcode res;
+	curl = curl_easy_init();
 
-	if (useCache)
+	struct BufferStruct output;
+	output.buffer = NULL;
+	output.size = 0;
+	if (curl)
 	{
-		Info("Getting Index.xml from cache");
-		//return Downloader.mIndexCached; 
-	}
-	else
-	{
-		Debug("Downloading %s", url);
-		CURL *curl;
-		CURLcode res;
-		curl = curl_easy_init();
 
-		struct BufferStruct output;
-		output.buffer = NULL;
-		output.size = 0;
-		if (curl)
-		{
+		curl_easy_setopt(curl, CURLOPT_URL, url);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 
-			curl_easy_setopt(curl, CURLOPT_URL, url);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
-
-			/* Perform the request, res will get the return code */
-			res = curl_easy_perform(curl);
-			/* Check for errors */
-			if (res != CURLE_OK)
-				Error("curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
-
-
-			/* always cleanup */
-			curl_easy_cleanup(curl);
-		}
-
-		while (output.buffer == 0)
-		{
-			Sleep(100);
-		}
-		Sleep(50);
-
-		return output.buffer;
+		/* Perform the request, res will get the return code */
+		res = curl_easy_perform(curl);
+		/* Check for errors */
+		if (res != CURLE_OK)
+			Error("curl_easy_perform() failed: %s\n",
+			curl_easy_strerror(res));
+		
+		/* always cleanup */
+		curl_easy_cleanup(curl);
 	}
 
-	return NULL;
+	while (output.buffer == 0)
+	{
+		Sleep(100);
+	}
+	Sleep(50);
+
+	return output.buffer;
 }
