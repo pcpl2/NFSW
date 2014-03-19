@@ -71,7 +71,7 @@ void Download(DownloadThread *DT)
 
 		SizeT destLen = DT->FI[s]->lenght;
 
-/*		unsigned char* Decomress = new unsigned char[srcLen];
+		unsigned char* Decomress = new unsigned char[srcLen];
 
 		unsigned char* Lzma = new unsigned char[srcLen];
 
@@ -82,14 +82,24 @@ void Download(DownloadThread *DT)
 		if (result != destLen)
 			Debug("Reading error");
 		
-		unsigned char prop[5] =
-		{
-			0
-		};
+
+		//props = (Byte)((p->pb * 5 + p->lp) * 9 + p->lc);
+		
+		unsigned char prop[5] = { 0 };
+
+		memcpy(prop, fp, 5);
 		
 		fclose(fp);
-		int ok = LzmaUncompress(Decomress, &srcLen, Lzma, &destLen, prop, LZMA_PROPS_SIZE);*/
+		int ok = LzmaUncompress(Decomress, &srcLen, Lzma, &destLen, prop, LZMA_PROPS_SIZE);
+
+		fp = fopen(File, "w+");
+
+		fwrite(Decomress, 1, srcLen, fp);
+
+		fclose(fp);
+
 		delete DatFileInTemp;
+		delete File;
 
 		/*
 		    public static string DecompressLZMA(byte[] compressedFile)
@@ -144,45 +154,39 @@ void Verify(VerifyCommandArgument *param)
 	*/
 
 
-	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/TracksHigh/index.xml
+	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/TracksHigh/index.xml //full
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/Tracks/index.xml
+	USING_NAMESPACE(CryptoPP)
+	USING_NAMESPACE(Weak1)
+
 	Downloader::SetVerifying(true);
 	char ServerPath[128] = { 0 };
-	char languagePackage[128] = { 0 };
-	char PatchPath[128] = { 0 };
-
-	Downloader D;
+	char languagePackage[5] = { 0 };
 	char FilePath[128];
-
 	char *path = new char[MAX_PATH];
 	char *path1 = new char[MAX_PATH];
 
-	if (param->Package > NULL)
-		memcpy(languagePackage, param->Package, 128);
-	if (languagePackage > NULL)
-		sprintf(ServerPath, "%s/%s", param->ServerPath, languagePackage);
+	bool FullDownload = param->FullDownload;
+	Downloader D;
 
-	//	sprintf(PatchPath, "%s", arg->PatchPath);
-	//	Debug("Verify Starting %s", languagePackage);
+	sprintf(ServerPath, "%s/", param->ServerPath);
 
-	bool stopOnFail = param->StopOnFail;
-	bool clearHashes = param->ClearHashes;
-	int num1 = param->WriteHashes ? 1 : 0;
-	bool downlload = param->Download;
-	bool fullDownload = false;
-	bool flag1 = false;
+	if (sizeof(param->Package) > NULL)
+		memcpy(languagePackage, param->Package, 5);
 
 	sprintf(FilePath, "%sindex.xml", ServerPath);
 	char * IndexCharFile = D.GetIndexFile(FilePath, false);
+
+	if (sizeof(IndexCharFile) < NULL)
+	{
+		Error("Error retrieving the index.xml file");
+	}
+
 	tinyxml2::XMLDocument indexFile;
 	indexFile.Parse(IndexCharFile);
 	free(IndexCharFile);
-	/*	if (indexFile = (tinyxml2::XMLDocument) NULL)
-	{
-	D.StopFlag = true;
-	Error("Error retrieving the index.xml file");
-	}else*/
+
 	long num2 = atol(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("length")->GetText());
 	int  num3 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("firstcab")->GetText());
 	int  num31 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("lastcab")->GetText());
@@ -191,42 +195,11 @@ void Verify(VerifyCommandArgument *param)
 
 	memcpy(path1, path, MAX_PATH);
 
-	if (sizeof(languagePackage) == 2)
-		sprintf(path1, "%s\\Sound\\Speech", path);
-	else if (sizeof(languagePackage) > 0)
+	if (sizeof(languagePackage) > 0)
 		sprintf(path1, "%s\\%s", path, languagePackage);
 
 	if (!Utils::FileExists(path1))
-		fullDownload = true;
-	if (!Utils::FileExists(path))
-		CreateDirectory(path, NULL);
-	delete path1;
-	/*
-	string path1 = Path.Combine(Environment.CurrentDirectory, patchPath);
-	string path2 = path1;
-	if (languagePackage.Length == 2)
-	path2 = path1 + "\\Sound\\Speech";
-	else if (languagePackage.Length > 0)
-	path2 = path1 + (object) '\\' + languagePackage;
-	if (!Directory.Exists(path2))
-	{
-	this.mTelemetry.Call(string.Format("full_download_{0}", (object) languagePackage));
-	fullDownload = true;
-	}
-	if (!Directory.Exists(path1))
-	Directory.CreateDirectory(path1);
-	HashManager.Instance.Clear();
-	HashManager.Instance.Start(indexFile, patchPath, languagePackage + ".hsh", this.mHashThreads);
-	if (!string.IsNullOrEmpty(languagePackage))
-	languagePackage = "/" + languagePackage;
-
-	*/
-	if (!languagePackage == NULL)
-		sprintf(languagePackage, "/%s", languagePackage);
-
-	int num7 = 1;
-	int val2 = 1;
-	bool flag2 = false;
+		CreateDirectory(path1, NULL);
 
 	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
 
@@ -236,9 +209,6 @@ void Verify(VerifyCommandArgument *param)
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		USING_NAMESPACE(CryptoPP)
-		USING_NAMESPACE(Weak1)
-
 		char *path3 = 0;
 		char path4[MAX_PATH] = { 0 };
 		char *innerText = new char[MAX_PATH];
@@ -252,11 +222,6 @@ void Verify(VerifyCommandArgument *param)
 		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
 		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
 
-		if (PatchPath == NULL)
-		{
-			//int length = strcspn(path3, "/") + 1; //path3.IndexOf("/");
-			//path3 = length < 0 ? patchPath : path3.Replace(path3.Substring(0, length), patchPath);
-		}
 		sscanf(path3, "%8s %s", str, path4);
 
 		if (strcmp(path4, "") != 0)
@@ -273,7 +238,7 @@ void Verify(VerifyCommandArgument *param)
 
 			if (strcmp(Hash, HashSvr) != 0)
 			{
-				Debug("FILE : %s Hash nie jest taki sam\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
 				i++;
 				if (!FI)
 				{	
@@ -306,13 +271,13 @@ void Verify(VerifyCommandArgument *param)
 			}
 			else
 			{
-				Debug("FILE : %s Hash jest taki sam\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
 			}
 		}
 		else
 		{
 			i++;
-			Debug("FILE : %s Brak pliku", innerText);
+			Debug("FILE : %s No file", innerText);
 			if (!FI)
 			{
 				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
@@ -348,6 +313,389 @@ void Verify(VerifyCommandArgument *param)
 		delete[] str;
 	}
 
+	if (sizeof(languagePackage) > NULL)
+		sprintf(ServerPath, "%s/%s", param->ServerPath, languagePackage);
+
+	sprintf(FilePath, "%s/index.xml", ServerPath);
+	IndexCharFile = D.GetIndexFile(FilePath, false);
+
+	if (sizeof(IndexCharFile) < NULL)
+	{
+		Error("Error retrieving the index.xml file");
+	}
+
+	indexFile.Parse(IndexCharFile);
+	free(IndexCharFile);
+
+	if (sizeof(languagePackage) > NULL)
+		sprintf(path1, "%s\\Sound\\Speech", path);
+
+	if (!Utils::FileExists(path1))
+		CreateDirectory(path1, NULL);
+
+	ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+
+	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
+	{
+		char *path3 = 0;
+		char path4[MAX_PATH] = { 0 };
+		char *innerText = new char[MAX_PATH];
+		char *File = new char[MAX_PATH];
+		char *str = new char[10];
+		char *Hash = 0;
+		char *HashSvr = 0;
+		MD5 md5;
+		std::string HashOutput;
+
+		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
+		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
+
+		sscanf(path3, "%8s %s", str, path4);
+
+		if (strcmp(path4, "") != 0)
+			sprintf(File, "%s\\%s\\%s", path, path4, innerText);
+		else
+			sprintf(File, "%s\\%s", path, innerText);
+
+		if (Utils::FileExists(File))
+		{
+			FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
+			Hash = const_cast<char*>(HashOutput.c_str());
+			Hash[strlen(Hash) - 1] = '\0';
+			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+
+			if (strcmp(Hash, HashSvr) != 0)
+			{
+				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+				i++;
+				if (!FI)
+				{
+					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[0]->path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->path, 0, MAX_PATH);
+					strcpy(FI[0]->path, path4);
+					FI[0]->file = (char *)malloc(MAX_PATH);
+					memset(FI[0]->file, 0, MAX_PATH);
+					strcpy(FI[0]->file, innerText);
+					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+				else
+				{
+					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[i - 1]->path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->path, path4);
+					FI[i - 1]->file = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->file, 0, MAX_PATH);
+					strcpy(FI[i - 1]->file, innerText);
+					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+			}
+			else
+			{
+				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+			}
+		}
+		else
+		{
+			i++;
+			Debug("FILE : %s No file", innerText);
+			if (!FI)
+			{
+				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+				FI[0]->path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->path, 0, MAX_PATH);
+				strcpy(FI[0]->path, path4);
+				FI[0]->file = (char *)malloc(MAX_PATH);
+				memset(FI[0]->file, 0, MAX_PATH);
+				strcpy(FI[0]->file, innerText);
+				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+			}
+			else
+			{
+				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+				FI[i - 1]->path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->path, 0, MAX_PATH);
+				strcpy(FI[i - 1]->path, path4);
+				FI[i - 1]->file = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->file, 0, MAX_PATH);
+				strcpy(FI[i - 1]->file, innerText);
+				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+			}
+		}
+
+		delete[] innerText;
+		delete[] File;
+		delete[] str;
+	}
+
+	sprintf(ServerPath, "%s/Tracks", param->ServerPath);
+
+	sprintf(FilePath, "%s/index.xml", ServerPath);
+	IndexCharFile = D.GetIndexFile(FilePath, false);
+
+	if (sizeof(IndexCharFile) < NULL)
+	{
+		Error("Error retrieving the index.xml file");
+	}
+
+	indexFile.Parse(IndexCharFile);
+	free(IndexCharFile);
+
+	sprintf(path1, "%s\\Tracks\\", path);
+
+	if (!Utils::FileExists(path1))
+		CreateDirectory(path1, NULL);
+
+	ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+
+	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
+	{
+		char *path3 = 0;
+		char path4[MAX_PATH] = { 0 };
+		char *innerText = new char[MAX_PATH];
+		char *File = new char[MAX_PATH];
+		char *str = new char[10];
+		char *Hash = 0;
+		char *HashSvr = 0;
+		MD5 md5;
+		std::string HashOutput;
+
+		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
+		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
+
+		sscanf(path3, "%8s %s", str, path4);
+
+		if (strcmp(path4, "") != 0)
+			sprintf(File, "%s\\%s\\%s", path, path4, innerText);
+		else
+			sprintf(File, "%s\\%s", path, innerText);
+
+		if (Utils::FileExists(File))
+		{
+			FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
+			Hash = const_cast<char*>(HashOutput.c_str());
+			Hash[strlen(Hash) - 1] = '\0';
+			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+
+			if (strcmp(Hash, HashSvr) != 0)
+			{
+				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+				i++;
+				if (!FI)
+				{
+					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[0]->path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->path, 0, MAX_PATH);
+					strcpy(FI[0]->path, path4);
+					FI[0]->file = (char *)malloc(MAX_PATH);
+					memset(FI[0]->file, 0, MAX_PATH);
+					strcpy(FI[0]->file, innerText);
+					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+				else
+				{
+					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[i - 1]->path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->path, path4);
+					FI[i - 1]->file = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->file, 0, MAX_PATH);
+					strcpy(FI[i - 1]->file, innerText);
+					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+			}
+			else
+			{
+				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+			}
+		}
+		else
+		{
+			i++;
+			Debug("FILE : %s No file", innerText);
+			if (!FI)
+			{
+				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+				FI[0]->path = (char *)malloc(MAX_PATH);
+				memset(FI[0]->path, 0, MAX_PATH);
+				strcpy(FI[0]->path, path4);
+				FI[0]->file = (char *)malloc(MAX_PATH);
+				memset(FI[0]->file, 0, MAX_PATH);
+				strcpy(FI[0]->file, innerText);
+				FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+			}
+			else
+			{
+				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+				FI[i - 1]->path = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->path, 0, MAX_PATH);
+				strcpy(FI[i - 1]->path, path4);
+				FI[i - 1]->file = (char *)malloc(MAX_PATH);
+				memset(FI[i - 1]->file, 0, MAX_PATH);
+				strcpy(FI[i - 1]->file, innerText);
+				FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+				FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+				FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+			}
+		}
+
+		delete[] innerText;
+		delete[] File;
+		delete[] str;
+	}
+
+	if (FullDownload)
+	{
+		sprintf(ServerPath, "%s/TracksHigh", param->ServerPath);
+
+		sprintf(FilePath, "%s/index.xml", ServerPath);
+		IndexCharFile = D.GetIndexFile(FilePath, false);
+
+		if (sizeof(IndexCharFile) < NULL)
+		{
+			Error("Error retrieving the index.xml file");
+		}
+
+		indexFile.Parse(IndexCharFile);
+		free(IndexCharFile);
+
+		sprintf(path1, "%s\\TracksHigh\\", path);
+
+		if (!Utils::FileExists(path1))
+			CreateDirectory(path1, NULL);
+
+		ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+
+		for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
+		{
+			char *path3 = 0;
+			char path4[MAX_PATH] = { 0 };
+			char *innerText = new char[MAX_PATH];
+			char *File = new char[MAX_PATH];
+			char *str = new char[10];
+			char *Hash = 0;
+			char *HashSvr = 0;
+			MD5 md5;
+			std::string HashOutput;
+
+			path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
+			sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
+
+			sscanf(path3, "%8s %s", str, path4);
+
+			if (strcmp(path4, "") != 0)
+				sprintf(File, "%s\\%s\\%s", path, path4, innerText);
+			else
+				sprintf(File, "%s\\%s", path, innerText);
+
+			if (Utils::FileExists(File))
+			{
+				FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
+				Hash = const_cast<char*>(HashOutput.c_str());
+				Hash[strlen(Hash) - 1] = '\0';
+				HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+
+				if (strcmp(Hash, HashSvr) != 0)
+				{
+					Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+					i++;
+					if (!FI)
+					{
+						FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+						FI[0]->path = (char *)malloc(MAX_PATH);
+						memset(FI[0]->path, 0, MAX_PATH);
+						strcpy(FI[0]->path, path4);
+						FI[0]->file = (char *)malloc(MAX_PATH);
+						memset(FI[0]->file, 0, MAX_PATH);
+						strcpy(FI[0]->file, innerText);
+						FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+						FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+						FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					}
+					else
+					{
+						FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+						FI[i - 1]->path = (char *)malloc(MAX_PATH);
+						memset(FI[i - 1]->path, 0, MAX_PATH);
+						strcpy(FI[i - 1]->path, path4);
+						FI[i - 1]->file = (char *)malloc(MAX_PATH);
+						memset(FI[i - 1]->file, 0, MAX_PATH);
+						strcpy(FI[i - 1]->file, innerText);
+						FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+						FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+						FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+					}
+				}
+				else
+				{
+					Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+				}
+			}
+			else
+			{
+				i++;
+				Debug("FILE : %s No file", innerText);
+				if (!FI)
+				{
+					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[0]->path = (char *)malloc(MAX_PATH);
+					memset(FI[0]->path, 0, MAX_PATH);
+					strcpy(FI[0]->path, path4);
+					FI[0]->file = (char *)malloc(MAX_PATH);
+					memset(FI[0]->file, 0, MAX_PATH);
+					strcpy(FI[0]->file, innerText);
+					FI[0]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[0]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[0]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[0]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+				else
+				{
+					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+					FI[i - 1]->path = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->path, 0, MAX_PATH);
+					strcpy(FI[i - 1]->path, path4);
+					FI[i - 1]->file = (char *)malloc(MAX_PATH);
+					memset(FI[i - 1]->file, 0, MAX_PATH);
+					strcpy(FI[i - 1]->file, innerText);
+					FI[i - 1]->section = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					FI[i - 1]->offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
+					FI[i - 1]->lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
+					FI[i - 1]->compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
+				}
+			}
+
+			delete[] innerText;
+			delete[] File;
+			delete[] str;
+		}
+	}
+
 	for (short s = 0; s < i; s++)
 	{
 		Debug("Verify : \npath : %s\nfile : %s\nsection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->path, FI[s]->file, FI[s]->section, FI[s]->offset, FI[s]->lenght, FI[s]->compressed);
@@ -363,11 +711,12 @@ void Verify(VerifyCommandArgument *param)
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)DT, 0, 0);
 
+	delete path1;
 	delete path;
 	delete param;
 }
 
-void Downloader::StartVerificationAndDownload()
+void Downloader::StartVerificationAndDownload(bool FullD)
 {
 	/*
 	ServerPath  http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client
@@ -383,10 +732,10 @@ void Downloader::StartVerificationAndDownload()
 
 	Vparam->ServerPath = "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client";
 	Vparam->PatchPath = "Data";
-	Vparam->Package = NULL;
+	Vparam->Package = "en"; //en ; de ; es ; fr ; ru ; 
+	Vparam->FullDownload = FullD;
 	Vparam->StopOnFail = false;
 	Vparam->ClearHashes = false;
-	Vparam->WriteHashes = false;
 	Vparam->Download = true;
 
 	Info("Starting verify");

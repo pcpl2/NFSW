@@ -32,11 +32,11 @@ public:
 	static FILE * GetFile();
 };
 
-#define Info(s,...) Logger::Log(LogType_Info,s,__VA_ARGS__)
-#define Error(s,...) Logger::Log(LogType_Error,s,__VA_ARGS__)
-#define Warning(s,...) Logger::Log(LogType_Warning,s,__VA_ARGS__)
+#define Info(s,...) Logger::Log(LogType_Info,s,##__VA_ARGS__)
+#define Error(s,...) Logger::Log(LogType_Error,s,##__VA_ARGS__)
+#define Warning(s,...) Logger::Log(LogType_Warning,s,##__VA_ARGS__)
 #ifdef DEBUG
-#	define Debug(s,...) Logger::Log(LogType_Debug,s,__VA_ARGS__)
+#    define Debug(s,...) Logger::Log(LogType_Debug,s,##__VA_ARGS__)
 #else
-#	define Debug(s,...)
+#    define Debug(s,...)
 #endif

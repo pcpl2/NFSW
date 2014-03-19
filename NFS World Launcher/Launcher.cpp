@@ -348,7 +348,7 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			}
 			break;
 		case ID_Button2:
-			D.StartVerificationAndDownload(); //debug
+			D.StartVerificationAndDownload(true); //debug
 			break;
 		case ID_Button3:
 			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
@@ -398,8 +398,6 @@ HWND * Launcher::Buttons = new HWND[4];
 HWND * Launcher::Edit = new HWND[1];
 HWND * Launcher::Text = new HWND[5];
 HWND * Launcher::Combo = new HWND[0];*/
-
-
 }
 
 /*

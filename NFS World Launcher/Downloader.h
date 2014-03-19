@@ -5,9 +5,9 @@ struct VerifyCommandArgument
 	char *ServerPath;
 	char *Package;
 	char *PatchPath;
+	bool FullDownload;
 	bool StopOnFail;
 	bool ClearHashes;
-	bool WriteHashes;
 	bool Download;
 };
 
@@ -34,8 +34,6 @@ protected:
 	HANDLE ThreadV;
 	HANDLE ThreadD;
 private:
-
-	
 	static Downloader instance;
 
 	bool Verifying;
@@ -49,14 +47,11 @@ private:
 
 	long CompressedLength;
 	long TotalToDownload;
-
-	int HashThreads;
 	
 	/*
 	const int LZMAOutPropsSize = 5;
 	const int LZMALengthSize = 8;
 	const int LZMAHeaderSize = 13;
-	const int HashThreads = 3;
 	const int DownloadThreads = 3;
 	const int DownloadChunks = 16;
 	*/
@@ -66,7 +61,7 @@ public:
 
 	bool StopFlag;
 
-	void StartVerificationAndDownload();
+	void StartVerificationAndDownload(bool FullD);
 
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 
