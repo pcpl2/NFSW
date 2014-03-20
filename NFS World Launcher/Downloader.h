@@ -53,13 +53,11 @@ public:
 	Downloader();
 	~Downloader();
 
-	bool StopFlag;
-
 	void StartVerificationAndDownload(bool FullD);
 
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 
-	char * GetIndexFile(char * url, bool useCache);
+	char * GetIndexFile(char * url);
 
 };
 

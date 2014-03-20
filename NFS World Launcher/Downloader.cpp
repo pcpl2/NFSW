@@ -1,6 +1,6 @@
 #include <includes.h>
 
-Downloader::Downloader() : StopFlag(false), ThreadV(0)
+Downloader::Downloader()
 {
 
 }
@@ -170,24 +170,16 @@ void Download(DownloadThread *DT)
 
 void Verify(VerifyArgument *param)
 {
-	/*
-	ServerPath  http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client
-	Package
-	PatchPath Data
-	StopOnFail false
-	Download true
-	*/
 	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
 	USING_NAMESPACE(CryptoPP)
 	USING_NAMESPACE(Weak1)
 
 	Downloader::SetVerifying(true);
 	char ServerPath[128] = { 0 };
-	char languagePackage[5] = { 0 };
+	char languagePackage[2] = { 0 };
 	char FilePath[128];
 	char *path = new char[MAX_PATH];
 	char *path1 = new char[MAX_PATH];
-
 	bool FullDownload = param->FullDownload;
 	Downloader D;
 
@@ -197,7 +189,7 @@ void Verify(VerifyArgument *param)
 		memcpy(languagePackage, param->Package, 5);
 
 	sprintf(FilePath, "%sindex.xml", ServerPath);
-	char * IndexCharFile = D.GetIndexFile(FilePath, false);
+	char * IndexCharFile = D.GetIndexFile(FilePath);
 
 	if (sizeof(IndexCharFile) < NULL)
 	{
@@ -208,12 +200,7 @@ void Verify(VerifyArgument *param)
 	indexFile.Parse(IndexCharFile);
 	free(IndexCharFile);
 
-	long num2 = atol(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("length")->GetText());
-	int  num3 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("firstcab")->GetText());
-	int  num31 = atoi(indexFile.FirstChildElement("index")->FirstChildElement("header")->FirstChildElement("lastcab")->GetText());
-
 	sprintf(path, "%s\\Data", Launcher::GetGameDir());
-
 	memcpy(path1, path, MAX_PATH);
 
 	if (sizeof(languagePackage) > 0)
@@ -223,9 +210,7 @@ void Verify(VerifyArgument *param)
 		CreateDirectory(path1, NULL);
 
 	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
-
 	FileInfo **FI = (FileInfo**)malloc(sizeof(FileInfo*) * 100);
-
 	short i = 0;
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
@@ -342,7 +327,7 @@ void Verify(VerifyArgument *param)
 		sprintf(ServerPath, "%s/%s", param->ServerPath, languagePackage);
 
 	sprintf(FilePath, "%s/index.xml", ServerPath);
-	IndexCharFile = D.GetIndexFile(FilePath, false);
+	IndexCharFile = D.GetIndexFile(FilePath);
 
 	if (sizeof(IndexCharFile) < NULL)
 	{
@@ -473,7 +458,7 @@ void Verify(VerifyArgument *param)
 	sprintf(ServerPath, "%s/Tracks", param->ServerPath);
 
 	sprintf(FilePath, "%s/index.xml", ServerPath);
-	IndexCharFile = D.GetIndexFile(FilePath, false);
+	IndexCharFile = D.GetIndexFile(FilePath);
 
 	if (sizeof(IndexCharFile) < NULL)
 	{
@@ -605,7 +590,7 @@ void Verify(VerifyArgument *param)
 		sprintf(ServerPath, "%s/TracksHigh", param->ServerPath);
 
 		sprintf(FilePath, "%s/index.xml", ServerPath);
-		IndexCharFile = D.GetIndexFile(FilePath, false);
+		IndexCharFile = D.GetIndexFile(FilePath);
 
 		if (sizeof(IndexCharFile) < NULL)
 		{
@@ -762,7 +747,6 @@ void Downloader::StartVerificationAndDownload(bool FullD)
 	Vparam->FullDownload = FullD;
 
 	Info("Starting verify");
-	StopFlag = false;
 	ThreadV = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Verify, Vparam, 0, 0);
 
 	time_t timeraw = time(NULL);
@@ -774,7 +758,7 @@ void Downloader::StartVerificationAndDownload(bool FullD)
 	//ThreadD = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)&downloadCommandArgument, 0, 0);
 }
 
-char *Downloader::GetIndexFile(char * url, bool useCache)
+char *Downloader::GetIndexFile(char * url)
 {
 	Debug("Downloading %s", url);
 	CURL *curl;

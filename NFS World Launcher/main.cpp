@@ -14,6 +14,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #ifdef DEBUG
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
 	freopen("CONIN$", "r", stdin);
 #endif
 	Logger::Init("launcher.log");

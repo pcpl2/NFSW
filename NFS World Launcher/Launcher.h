@@ -21,6 +21,20 @@ struct User
 	char userId[10];
 };
 
+enum Language{
+	English,
+	Germany,
+	Spanish,
+	French,
+	Polish,
+	Russian,
+	Portuguese,
+	Thai,
+	Turkish,
+	Chinese,
+	Chinese_Simplified,
+};
+
 class Launcher
 {
 private:

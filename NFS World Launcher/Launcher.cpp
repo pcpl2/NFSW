@@ -48,6 +48,21 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	{
 
 	}*/
+	
+	/* 
+	de 0x0C07(3079) Germany;
+	es 0x2C0A(11274) Spanish; 
+	fr 0x080c(2060) French; 
+	pl 0x0415(1045) Polish;
+	pt 0x0416(1046) Portuguese;
+	ru 0x0419(1049) Russian;
+	th 0x041E(1054) Thai;
+	tr 0x041F(1055) Turkish; 
+	zh 0x0C04(3076) Chinese;
+	zh_chs 0x0004(4) Chinese Simplified;
+	*/
+
+	LANGID lang = GetUserDefaultUILanguage(); 
 
 	GetGameDirFromRegistry();
 
@@ -77,28 +92,40 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	strcpy(sz_Password, "Password");
 	Text[0] = CreateWindowEx(NULL, WC_STATIC, "Email :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 20, 85, 80, 25, Window[0], NULL, hInstance, NULL);
 	Edit[0] = CreateWindowEx(NULL, WC_EDIT, sz_Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 100, 200, 25, Window[0], NULL, hInstance, NULL);
-	Text[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 85, 80, 25, Window[0], 0, hInstance, 0);
+	Text[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 85, 80, 25, Window[0], NULL, hInstance, NULL);
 	Edit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
 	Combo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 20, 150, 200, Window[0], NULL, hInstance, NULL);
 
 	Buttons[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
 	ShowWindow(Buttons[2], SW_HIDE);
 
+	wc.lpfnWndProc = OptionsProc;
+	wc.lpszClassName = "NFSWL_Options";
+	RegisterClassEx(&wc);
+
+	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_Options", "Options", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 400, 500, NULL, NULL, hInstance, NULL);
+	Text[2] = CreateWindowEx(NULL, WC_STATIC, "Wybierz jêzyk :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 90, 20, 80, 25, Window[1], NULL, hInstance, NULL);
+	Combo[1] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 90, 40, 200, 100, Window[1], NULL, hInstance, NULL);
+
+
 
 	for (int i = 0; i < sizeof(R); i++)
 	{
-		
 		char buffer[128];
 		Debug("%s - %s", R[i].ShardName, R[i].Name);
 		sprintf(buffer, "%s - %s", R[i].ShardName, R[i].Name);
-
 		SendMessage(Combo[0], CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
 
 	SendMessage(Combo[0], CB_SETCURSEL, (WPARAM)0, 0);
+
+	for (int i = 0; i < sizeof(Language); i++)
+	{
+		SendMessage(Combo[1], CB_ADDSTRING, 0, (LPARAM)"");
+	}
+
+	SendMessage(Combo[1], CB_SETCURSEL, (WPARAM)0, 0);
 	
-
-
 	for (int i = 0; i < sizeof(Buttons); i++)
 	{
 		if (Buttons[i] == NULL)
@@ -348,7 +375,8 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			}
 			break;
 		case ID_Button2:
-			D.StartVerificationAndDownload(true); //debug
+	//		D.StartVerificationAndDownload(true); //debug
+			ShowWindow(Window[1], SW_SHOW);
 			break;
 		case ID_Button3:
 			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
