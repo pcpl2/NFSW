@@ -47,6 +47,7 @@
       <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\cryptopp562;..\libs\lzma920\C</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -68,6 +69,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

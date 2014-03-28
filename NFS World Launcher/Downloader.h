@@ -12,6 +12,7 @@ struct FileInfo
 	char *Path;
 	char *File;
 	int Section;
+	int ToSection;
 	int Offset;
 	int Lenght;
 	int Compressed;
@@ -23,6 +24,8 @@ struct DownloadThread
 	short i;
 	FileInfo **FI;
 	char *Path;
+	char *Package;
+	char *Url;
 };
 
 class Downloader
@@ -53,7 +56,7 @@ public:
 	Downloader();
 	~Downloader();
 
-	void StartVerificationAndDownload(bool FullD);
+	void StartVerificationAndDownload(bool FullD, char* Package, char* ServerPath);
 
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 

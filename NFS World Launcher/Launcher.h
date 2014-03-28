@@ -33,7 +33,7 @@ enum Language{
 	Turkish,
 	Chinese,
 	Chinese_Simplified,
-};
+}; 
 
 class Launcher
 {
@@ -45,7 +45,7 @@ private:
 
 	static HWND * Window;
 
-	static HWND * Buttons;
+	static HWND * Button;
 	static HWND * Edit;
 	static HWND * Text;
 	static HWND * Combo;
@@ -59,6 +59,8 @@ private:
 	static char *GameDirRegistryKeyName;
 	static char *TermsOfService;
 	static char GameDir[MAX_PATH];
+	static char *LanguageText;
+	static char *GameUrl;
 
 	static HKEY hKey;
 public:
@@ -69,13 +71,14 @@ public:
 
 	static bool Pulse();
 
-	static bool Login(char *login, char *password, char *server, char *region);
+	static bool SignIn(char *login, char *password, char *server, char *region);
 
 	static int StartGame(char *login, char *password, char *url, char *region);
 
 	static bool GetGameDirFromRegistry();
 
 	static void getshardinfo();
+	static void launcherinfo();
 
 	inline static char* GetGameDir() { return GameDir; };
 

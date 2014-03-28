@@ -5,16 +5,15 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 HWND * Launcher::Window = new HWND[1];
-HWND * Launcher::Buttons = new HWND[4];
+HWND * Launcher::Button = new HWND[8];
 HWND * Launcher::Edit = new HWND[1];
 HWND * Launcher::Text = new HWND[5];
 HWND * Launcher::Combo = new HWND[0];
 
 int Launcher::region;
 
-char sz_Login[128] = { 0 };
-char sz_Password[128] = { 0 };
-char szGameExePath[MAX_PATH] = { 0 }, szGameDataPath[MAX_PATH] = { 0 }, arg[MAX_PATH] = { 0 };
+char Login[128] = { 0 };
+char Password[128] = { 0 };
 
 Region * Launcher::R = new Region[4];
 User * Launcher::Logged = new User[0];
@@ -32,13 +31,16 @@ HKEY Launcher::hKey = 0;
 char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Speed World";
 char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
 char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt"; //GetUserDefaultLangID _de ; _es ; _fr ; _pl ; _pt ; _ru ; _th ; _tr ; _zh ;  _zh_chs
+char *Launcher::LanguageText = new char[10];
 char Launcher::GameDir[MAX_PATH] = { 0 };
+char *Launcher::GameUrl = (char *)malloc(256);
 
 void Launcher::Initialize(HINSTANCE hInstance)
 {
 	HFONT hFont = CreateFont(15, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
+	//Launcher::LanguageText = { 'English', 'Germany', 'Spanish', 'French', 'Polish' 'Russian', 'Portuguese', 'Thai', 'Turkish', 'Chinese', 'Chinese_Simplified' };
 
 	WNDCLASSEX wc;
 
@@ -67,6 +69,7 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	GetGameDirFromRegistry();
 
 	getshardinfo();
+	launcherinfo();
 
 	memset(&wc, 0, sizeof(WNDCLASSEX));
 
@@ -86,27 +89,29 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	RegisterClassEx(&wc);
 
 	Window[0] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_main", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX,CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
-	Buttons[0] = CreateWindowEx(NULL, WC_BUTTON, "Login", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button1, hInstance, NULL);
-	Buttons[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, Window[0], (HMENU)ID_Button2, hInstance, NULL);
-	strcpy(sz_Login, "Email");
-	strcpy(sz_Password, "Password");
+	Button[0] = CreateWindowEx(NULL, WC_BUTTON, "Login", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button1, hInstance, NULL);
+	Button[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, Window[0], (HMENU)ID_Button2, hInstance, NULL);
+	strcpy(Login, "Email");
+	strcpy(Password, "Password");
 	Text[0] = CreateWindowEx(NULL, WC_STATIC, "Email :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 20, 85, 80, 25, Window[0], NULL, hInstance, NULL);
-	Edit[0] = CreateWindowEx(NULL, WC_EDIT, sz_Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 100, 200, 25, Window[0], NULL, hInstance, NULL);
+	Edit[0] = CreateWindowEx(NULL, WC_EDIT, Login, WS_CHILD | WS_VISIBLE | WS_BORDER, 20, 100, 200, 25, Window[0], NULL, hInstance, NULL);
 	Text[1] = CreateWindowEx(NULL, WC_STATIC, "Password :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 250, 85, 80, 25, Window[0], NULL, hInstance, NULL);
-	Edit[1] = CreateWindowEx(NULL, WC_EDIT, sz_Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
+	Edit[1] = CreateWindowEx(NULL, WC_EDIT, Password, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_PASSWORD, 250, 100, 200, 25, Window[0], NULL, hInstance, NULL);
 	Combo[0] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 20, 20, 150, 200, Window[0], NULL, hInstance, NULL);
 
-	Buttons[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
-	ShowWindow(Buttons[2], SW_HIDE);
+	Button[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
+	ShowWindow(Button[2], SW_HIDE);
 
 	wc.lpfnWndProc = OptionsProc;
 	wc.lpszClassName = "NFSWL_Options";
 	RegisterClassEx(&wc);
 
 	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_Options", "Options", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 400, 500, NULL, NULL, hInstance, NULL);
-	Text[2] = CreateWindowEx(NULL, WC_STATIC, "Wybierz jêzyk :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 90, 20, 80, 25, Window[1], NULL, hInstance, NULL);
+	Text[2] = CreateWindowEx(NULL, WC_STATIC, "Select a language :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 90, 20, 80, 25, Window[1], NULL, hInstance, NULL);
 	Combo[1] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 90, 40, 200, 100, Window[1], NULL, hInstance, NULL);
 
+	Button[3] = CreateWindowEx(0, WC_BUTTON, "Full Download", WS_CHILD | WS_VISIBLE | BS_CHECKBOX,
+		100, 100, 150, 30, Window[1], NULL, hInstance, NULL);
 
 
 	for (int i = 0; i < sizeof(R); i++)
@@ -126,12 +131,12 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	SendMessage(Combo[1], CB_SETCURSEL, (WPARAM)0, 0);
 	
-	for (int i = 0; i < sizeof(Buttons); i++)
+	for (int i = 0; i < sizeof(Button); i++)
 	{
-		if (Buttons[i] == NULL)
+		if (Button[i] == NULL)
 			continue;
 
-		SendMessage(Buttons[i], WM_SETFONT, WPARAM(hFont), TRUE);
+		SendMessage(Button[i], WM_SETFONT, WPARAM(hFont), TRUE);
 
 		if (Text[i] == NULL)
 			continue;
@@ -171,7 +176,7 @@ bool Launcher::Pulse()
 	return true;
 }
 
-bool Launcher::Login(char *login, char *password, char *server, char *region)
+bool Launcher::SignIn(char *login, char *password, char *server, char *region)
 {
 	CURL *curl;
 	CURLcode res;
@@ -230,8 +235,6 @@ bool Launcher::Login(char *login, char *password, char *server, char *region)
 	}
 	Sleep(50);
 
-//	Debug("%s", output.buffer);
-
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
 	//if ()
@@ -244,24 +247,25 @@ bool Launcher::Login(char *login, char *password, char *server, char *region)
 	return true;
 }
 
-int Launcher::StartGame(char *securityToken, char *userId, char *server, char *region)
+int Launcher::StartGame(char *SecurityToken, char *UserId, char *Server, char *Region)
 {
-	sprintf(szGameDataPath, "%s\\Data\\", Launcher::GameDir);
-	sprintf(szGameExePath, "%snfsw.exe", szGameDataPath);
-	sprintf(arg, "\"%s\" %s %s %s %s", szGameExePath, region, server, securityToken, userId);
+	char GameExePath[MAX_PATH] = { 0 }, GameDataPath[MAX_PATH] = { 0 }, Arg[MAX_PATH] = { 0 };
+	sprintf(GameDataPath, "%s\\Data\\", Launcher::GameDir);
+	sprintf(GameExePath, "%snfsw.exe", GameDataPath);
+	sprintf(Arg, "\"%s\" %s %s %s %s", GameExePath, Region, Server, SecurityToken, UserId);
 
 	// Create game process
-	STARTUPINFO siStartupInfo = { 0 };
-	PROCESS_INFORMATION piProcessInformation = { 0 };
-	siStartupInfo.cb = sizeof(siStartupInfo);
+	STARTUPINFO SiStartupInfo = { 0 };
+	PROCESS_INFORMATION PiProcessInformation = { 0 };
+	SiStartupInfo.cb = sizeof(SiStartupInfo);
 
-	if (!CreateProcess(szGameExePath, arg, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, szGameDataPath, &siStartupInfo, &piProcessInformation))
+	if (!CreateProcess(GameExePath, Arg, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, GameDataPath, &SiStartupInfo, &PiProcessInformation))
 	{
 		MessageBox(NULL, "Cannot create game process.", "NFSW - Error", MB_ICONERROR);
 		return E_FAIL;
 	}
 
-	ResumeThread(piProcessInformation.hThread);
+	ResumeThread(PiProcessInformation.hThread);
 
 	return S_OK;
 }
@@ -320,6 +324,52 @@ void Launcher::getshardinfo()
 	}
 }
 
+void Launcher::launcherinfo()
+{
+	CURL *curl;
+	CURLcode res;
+	curl = curl_easy_init();
+
+	struct BufferStruct output;
+	output.buffer = NULL;
+	output.size = 0;
+	if (curl)
+	{
+
+		curl_easy_setopt(curl, CURLOPT_URL, "https://94.236.124.241/nfsw/Engine.svc/launcherinfo");
+		Debug("Connect to https://94.236.124.241/nfsw/Engine.svc/launcherinfo");
+
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
+
+		/* Perform the request, res will get the return code */
+		res = curl_easy_perform(curl);
+		/* Check for errors */
+		if (res != CURLE_OK)
+			Error("curl_easy_perform() failed: %s\n",
+			curl_easy_strerror(res));
+
+
+		/* always cleanup */
+		curl_easy_cleanup(curl);
+	}
+
+	while (output.buffer == 0)
+	{
+		Sleep(100);
+	}
+	Sleep(50);
+
+	tinyxml2::XMLDocument doc;
+	doc.Parse(output.buffer);
+	free(output.buffer);
+	tinyxml2::XMLElement* gameurl = doc.FirstChildElement("configuration")->FirstChildElement("cdn")->FirstChildElement("game");
+	strcpy(Launcher::GameUrl, gameurl->GetText());
+}
+
 bool Launcher::GetGameDirFromRegistry()
 {
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, GameDirRegistryKeyPath, NULL, KEY_READ, &Launcher::hKey) != ERROR_SUCCESS)
@@ -360,23 +410,23 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		case ID_Button1:
 			EnableWindow(Combo[0], false);
 			region = SendMessage(Combo[0], CB_GETCURSEL, 0, 0);
-			GetWindowText(Edit[0], sz_Login, sizeof(sz_Login));
-			GetWindowText(Edit[1], sz_Password, sizeof(sz_Password));
-			if (Launcher::Login(sz_Login, sz_Password, R[region].Url, R[region].Name))
+			GetWindowText(Edit[0], Login, sizeof(Login));
+			GetWindowText(Edit[1], Password, sizeof(Password));
+			if (Launcher::SignIn(Login, Password, R[region].Url, R[region].Name))
 			{
 				ShowWindow(Combo[0], SW_HIDE);
 				ShowWindow(Edit[0], SW_HIDE);
 				ShowWindow(Edit[1], SW_HIDE);
 				ShowWindow(Text[1], SW_HIDE);
 				ShowWindow(Text[0], SW_HIDE);
-				ShowWindow(Buttons[0], SW_HIDE);
-				ShowWindow(Buttons[1], SW_HIDE);
-				ShowWindow(Buttons[2], SW_SHOW);
+				ShowWindow(Button[0], SW_HIDE);
+				ShowWindow(Button[1], SW_HIDE);
+				ShowWindow(Button[2], SW_SHOW);
 			}
 			break;
 		case ID_Button2:
-	//		D.StartVerificationAndDownload(true); //debug
-			ShowWindow(Window[1], SW_SHOW);
+			D.StartVerificationAndDownload(true, "en", GameUrl); //debug
+	//		ShowWindow(Window[1], SW_SHOW);
 			break;
 		case ID_Button3:
 			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
@@ -421,8 +471,10 @@ void Launcher::remove()
 {
 	delete[] R;
 	delete[] Logged;
+	delete[] LanguageText;
+	free(GameUrl);
 	/*HWND * Launcher::Window = new HWND[1];
-HWND * Launcher::Buttons = new HWND[4];
+HWND * Launcher::Button = new HWND[4];
 HWND * Launcher::Edit = new HWND[1];
 HWND * Launcher::Text = new HWND[5];
 HWND * Launcher::Combo = new HWND[0];*/
@@ -458,9 +510,9 @@ securityToken
 this.DoCall(serverUrl, command, (string[]) null, extraHeaders, RequestMethod.POST);
 }
 }
-*/
 
-/*
+
+
 private void LoadWebStore(string remoteUserId, string webAuthKey)
 {
 this.remoteUserId = remoteUserId;
@@ -481,9 +533,7 @@ remoteUserId = string.Empty;
 webAuthKey = string.Empty;
 }
 
-*/
 
-/*
 private string GetWebSecurityToken()
 {
 string xml = new WebServicesWrapper().DoCall(ShardManager.ShardUrl, "/security/generatewebtoken", (string[]) null, new string[4][]

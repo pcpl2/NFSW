@@ -11,17 +11,21 @@ Downloader::~Downloader()
 
 }
 
+int Progress_Func(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded)
+{
+	Debug("%d / %d", (int)NowDownloaded, (int)TotalToDownload);
+	return 0;
+}
+
 void Download(DownloadThread *DT)
 {
-	//http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/Section1075.dat nfsw.exe
-
 	short i = DT->i;
 	char *DefaultTempPath = new char[MAX_PATH];
 	char *TempPath = new char[MAX_PATH];
 
 	GetTempPath(MAX_PATH, (LPSTR)DefaultTempPath);
 
-	sprintf(TempPath, "%s\\nfswl\\", DefaultTempPath);
+	sprintf(TempPath, "%snfswl\\", DefaultTempPath);
 	Debug("%s\n%s\n", DefaultTempPath, TempPath);
 
 	if (!Utils::FileExists(TempPath))
@@ -38,55 +42,57 @@ void Download(DownloadThread *DT)
 		char *TempPathFile = new char[MAX_PATH];
 		char Url[256];
 		size_t result;
-		int FromSection;
-		int val2 = 1;
 		int num7;
 
-		sprintf(TempPathFile, "%s\\%s\\", TempPath, DT->FI[s]->File);
+		sprintf(TempPathFile, "%s%i\\", TempPath, DT->FI[s]->Offset);
 		if (!Utils::FileExists(TempPathFile))
 			CreateDirectory(TempPathFile, NULL);
 
-		Debug("Download : \npath : %s\nfile : %s\nSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
+		Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
 		
-		num7 = DT->FI[s+1]->Section;
-		FromSection = DT->FI[s]->Section;
-		val2 = FromSection;
+		num7 = DT->FI[s]->ToSection;
+		int val2 = DT->FI[s]->Section;
+
 		if (DT->FI[s]->Offset == 0)
 			--num7;
 
 		for (; val2 <= num7; ++val2)
 		{
-			sprintf(DatFile, "Section%d.dat", val2);
-			Debug("Section%d.dat", val2);
+			sprintf(DatFile, "section%d.dat", val2);
+			Debug("section%d.dat", val2);
 
 			if (DT->FI[s]->LanguagePackage)
 			{
-				sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/%s", DatFile);
+				sprintf(Url, "%s/%s/%s", DT->Url, DT->Package, DatFile);
 			}
 			else
 			{
-				sprintf(Url, "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/%s", DatFile);
+				sprintf(Url, "%s/%s", DT->Url, DatFile);
 			}
 
 			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
-			curl = curl_easy_init();
-			if (!Utils::FileExists(DatFileInTemp))
-			{
-				if (curl)
-				{
-					fp = fopen(DatFileInTemp, "wb");
-					curl_easy_setopt(curl, CURLOPT_URL, Url);
-					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-					res = curl_easy_perform(curl);
-					/* always cleanup */
-					curl_easy_cleanup(curl);
-					fclose(fp);
-				}
-			}
-			
-		}
 
+			curl = curl_easy_init();
+
+			fp = fopen(DatFileInTemp, "wb+");
+			if (curl)
+			{
+				Debug("Downloading %s", Url);
+				curl_easy_setopt(curl, CURLOPT_URL, Url);
+				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
+				curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+				curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
+				curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, Progress_Func);
+				res = curl_easy_perform(curl);
+
+				if (res != CURLE_OK)
+					Error("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+				/* always cleanup */
+				curl_easy_cleanup(curl);
+					
+			}
+		}
+		fclose(fp);
 		delete DatFile;
 
 		if (strcmp(DT->FI[s]->Path, "") != 0)
@@ -95,98 +101,97 @@ void Download(DownloadThread *DT)
 			sprintf(File, "%s\\%s", DT->Path, DT->FI[s]->File);
 
 		SizeT srcLen = DT->FI[s]->Compressed - 13;
-
 		SizeT destLen = DT->FI[s]->Lenght;
 
-		unsigned char* Decomress = new unsigned char[srcLen];
+//		for (int x = DT->FI[s]->Section; x <= num7; x++)
+//		{
+/*			fp = fopen(DatFileInTemp, "rb");
+			if (NULL != fp)
+			{
+				Debug("Can open the file");
+			}
+			else
+				Debug("Could not open the file");
 
-		unsigned char* Lzma = new unsigned char[srcLen];
+			result = fread(Lzma, 1, srcLen, fp);
 
-		fp = fopen(DatFileInTemp, "rb");
+			if (result != srcLen)
+				Debug("Reading error");
 
-		result = fread(Lzma, 1, destLen, fp);
+			fclose(fp);
+	//	}*/
+		/*int num3 = 0;
+		while (num3 < DT->FI[s]->Compressed)
+		{
+			
+		}*/
 
-		if (result != destLen)
-			Debug("Reading error");
+		unsigned char Prop[5];
+		unsigned char Arr[13];
+		std::vector<unsigned char> inBuf2;
 		
+		std::ifstream::pos_type size;
+		std::ifstream file;
+		file.open(DatFileInTemp, std::ios::in |std::ios::binary | std::ios::ate);
 
-		//props = (Byte)((p->pb * 5 + p->lp) * 9 + p->lc);
-		
-		unsigned char prop[5] = { 0 };
+		size = file.tellg();
+		std::vector<unsigned char> inBuf(size);
+		file.seekg(0, std::ios::beg);
+		file.read((char *)&inBuf[0], size);
+		file.close();
 
-		memcpy(prop, fp, 5);
-		
-		fclose(fp);
-		int ok = LzmaUncompress(Decomress, &srcLen, Lzma, &destLen, prop, LZMA_PROPS_SIZE);
 
-		fp = fopen(File, "w+");
+		for (int index = 0; index < 13; index++)
+			Arr[index] = (int)inBuf.at(DT->FI[s]->Offset + index);
 
-		fwrite(Decomress, 1, srcLen, fp);
+		for (int index = DT->FI[s]->Offset + 13; index < DT->FI[s]->Offset + DT->FI[s]->Compressed; index++)
+			inBuf2.push_back(inBuf[index]);
+
+		for (int index = 0; index < 5; ++index)
+			Prop[index] = Arr[index];
+		long num6 = 0L;
+		for (int index = 0; index < 8; ++index)
+			num6 += (long)((int)Arr[index + 5] << 8 * index);
+		unsigned char* Decomress = new unsigned char[destLen];
+
+		int ok = LzmaUncompress(Decomress, &destLen, &inBuf2[0], &srcLen, Prop, LZMA_PROPS_SIZE);
+
+		fp = fopen(File, "wb+");
+
+		fwrite(Decomress, 1, destLen, fp);
 
 		fclose(fp);
 
 		delete DatFileInTemp;
 		delete File;
-
-		/*
-		    public static string DecompressLZMA(byte[] compressedFile)
-    {
-      IntPtr srcLen = new IntPtr(compressedFile.Length - 13);
-      byte[] src = new byte[srcLen.ToInt64()];
-      IntPtr outPropsSize = new IntPtr(5);
-      byte[] outProps = new byte[5];
-      compressedFile.CopyTo((Array) src, 13);
-      for (int index = 0; index < 5; ++index)
-        outProps[index] = compressedFile[index];
-      int length = 0;
-      for (int index = 0; index < 8; ++index)
-        length += (int) compressedFile[index + 5] << 8 * index;
-      IntPtr destLen = new IntPtr(length);
-      byte[] numArray = new byte[length];
-      int errorCode = UnsafeNativeMethods.LzmaUncompress(numArray, ref destLen, src, ref srcLen, outProps, outPropsSize);
-      if (errorCode != 0)
-      {
-        Downloader.mLogger.Fatal((object) ("Decompression returned " + (object) errorCode));
-        throw new UncompressionException(errorCode, string.Format(ResourceWrapper.Instance.GetString("GameLauncher.LanguageStrings", "DOWNLOADER00002"), (object) errorCode));
-      }
-      else
-        return new string(Encoding.UTF8.GetString(numArray).ToCharArray());
-    }
-		
-		*/
 	}
-
-
-	/*
-	char ** tablica = new char*[ilosc];
-	for (uint32 i = 0; i < rozmiar; i++)
-	{
-	DajZadanieCurlowi(tablica[i]);
-	}
-	delete[] tablica;
-	*/
 
 }
 
 void Verify(VerifyArgument *param)
 {
-	// add http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client/en/index.xml  //en ; de ; es ; fr ; ru ; 
+	//en ; de ; es ; fr ; ru ; 
 	USING_NAMESPACE(CryptoPP)
 	USING_NAMESPACE(Weak1)
 
 	Downloader::SetVerifying(true);
-	char ServerPath[128] = { 0 };
-	char languagePackage[2] = { 0 };
-	char FilePath[128];
+
+	char *languagePackage = new char[3];
 	char *path = new char[MAX_PATH];
 	char *path1 = new char[MAX_PATH];
+	char FilePath[128];
+	char ServerPath[128] = { 0 };
 	bool FullDownload = param->FullDownload;
+	bool tos = false;
+	short i = 0;
+	FileInfo **FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
 	Downloader D;
+
 
 	sprintf(ServerPath, "%s/", param->ServerPath);
 
 	if (sizeof(param->Package) > NULL)
-		memcpy(languagePackage, param->Package, 5);
+		memcpy(languagePackage, param->Package, 3);
 
 	sprintf(FilePath, "%sindex.xml", ServerPath);
 	char * IndexCharFile = D.GetIndexFile(FilePath);
@@ -203,16 +208,15 @@ void Verify(VerifyArgument *param)
 	sprintf(path, "%s\\Data", Launcher::GetGameDir());
 	memcpy(path1, path, MAX_PATH);
 
-	if (sizeof(languagePackage) > 0)
+	if (sizeof(languagePackage) > NULL)
 		sprintf(path1, "%s\\%s", path, languagePackage);
 
 	if (!Utils::FileExists(path1))
 		CreateDirectory(path1, NULL);
 
 	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
-	FileInfo **FI = (FileInfo**)malloc(sizeof(FileInfo*) * 100);
-	short i = 0;
 
+	
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
 		char *path3 = 0;
@@ -224,6 +228,12 @@ void Verify(VerifyArgument *param)
 		char *HashSvr = 0;
 		MD5 md5;
 		std::string HashOutput;
+
+		if (tos)
+		{
+			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+			tos = false;
+		}
 
 		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
 		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
@@ -260,6 +270,8 @@ void Verify(VerifyArgument *param)
 					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[0]->LanguagePackage = false;
+					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 				else
 				{
@@ -275,6 +287,8 @@ void Verify(VerifyArgument *param)
 					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[i - 1]->LanguagePackage = false;
+					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 			}
 			else
@@ -300,6 +314,8 @@ void Verify(VerifyArgument *param)
 				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[0]->LanguagePackage = false;
+				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 			else
 			{
@@ -315,6 +331,8 @@ void Verify(VerifyArgument *param)
 				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[i - 1]->LanguagePackage = false;
+				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 		}
 
@@ -357,6 +375,12 @@ void Verify(VerifyArgument *param)
 		MD5 md5;
 		std::string HashOutput;
 
+		if (tos)
+		{
+			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+			tos = false;
+		}
+
 		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
 		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
 
@@ -392,6 +416,8 @@ void Verify(VerifyArgument *param)
 					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[0]->LanguagePackage = true;
+					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 				else
 				{
@@ -407,6 +433,8 @@ void Verify(VerifyArgument *param)
 					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[i - 1]->LanguagePackage = true;
+					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 			}
 			else
@@ -432,6 +460,8 @@ void Verify(VerifyArgument *param)
 				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[0]->LanguagePackage = true;
+				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 			else
 			{
@@ -447,6 +477,8 @@ void Verify(VerifyArgument *param)
 				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[i - 1]->LanguagePackage = true;
+				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 		}
 
@@ -487,6 +519,12 @@ void Verify(VerifyArgument *param)
 		MD5 md5;
 		std::string HashOutput;
 
+		if (tos)
+		{
+			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+			tos = false;
+		}
+
 		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
 		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
 
@@ -522,6 +560,8 @@ void Verify(VerifyArgument *param)
 					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[0]->LanguagePackage = false;
+					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 				else
 				{
@@ -537,6 +577,8 @@ void Verify(VerifyArgument *param)
 					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[i - 1]->LanguagePackage = false;
+					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 			}
 			else
@@ -562,6 +604,8 @@ void Verify(VerifyArgument *param)
 				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[0]->LanguagePackage = false;
+				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 			else
 			{
@@ -577,6 +621,8 @@ void Verify(VerifyArgument *param)
 				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 				FI[i - 1]->LanguagePackage = false;
+				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = true;
 			}
 		}
 
@@ -619,6 +665,12 @@ void Verify(VerifyArgument *param)
 			MD5 md5;
 			std::string HashOutput;
 
+			if (tos)
+			{
+				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+				tos = false;
+			}
+
 			path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
 			sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
 
@@ -654,6 +706,8 @@ void Verify(VerifyArgument *param)
 						FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 						FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 						FI[0]->LanguagePackage = false;
+						FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						tos = true;
 					}
 					else
 					{
@@ -669,6 +723,8 @@ void Verify(VerifyArgument *param)
 						FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 						FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 						FI[i - 1]->LanguagePackage = false;
+						FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+						tos = true;
 					}
 				}
 				else
@@ -694,6 +750,8 @@ void Verify(VerifyArgument *param)
 					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[0]->LanguagePackage = false;
+					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 				else
 				{
@@ -709,6 +767,8 @@ void Verify(VerifyArgument *param)
 					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
 					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
 					FI[i - 1]->LanguagePackage = false;
+					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+					tos = true;
 				}
 			}
 
@@ -720,42 +780,43 @@ void Verify(VerifyArgument *param)
 
 	for (short s = 0; s < i; s++)
 	{
-		Debug("Verify : \npath : %s\nfile : %s\nSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+		Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection,  FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
 	}
 
 	DownloadThread *DT = new DownloadThread;
 
 	DT->Path = (char *)malloc(MAX_PATH);
 	strcpy(DT->Path, path);
+	DT->Package = (char *)malloc(3);
+	strcpy(DT->Package, languagePackage);
 	DT->i = i;
 	DT->FI = (FileInfo**)malloc(sizeof(FileInfo)* 100);
 	memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
+	DT->Url = (char *)malloc(256);
+	strcpy(DT->Url, param->ServerPath);
+	
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)DT, 0, 0);
 
 	delete path1;
 	delete path;
 	delete param;
+	delete[] languagePackage;
 }
 
-void Downloader::StartVerificationAndDownload(bool FullD)
+void Downloader::StartVerificationAndDownload(bool FullD, char* Package, char* ServerPath)
 {
 	VerifyArgument *Vparam = new VerifyArgument;
 
-	Vparam->ServerPath = "http://static.cdn.ea.com/blackbox/u/f/NFSWO/1594/client";
-	Vparam->Package = "en"; //en ; de ; es ; fr ; ru ; 
+	Vparam->ServerPath = (char *)malloc(256);
+	memcpy(Vparam->ServerPath, ServerPath, 256);
+	Vparam->Package = (char *)malloc(3);
+	strcpy(Vparam->Package, Package);//en ; de ; es ; fr ; ru ; 
 	Vparam->FullDownload = FullD;
 
 	Info("Starting verify");
 	ThreadV = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Verify, Vparam, 0, 0);
 
-	time_t timeraw = time(NULL);
-	struct tm * Timeinfo = localtime(&timeraw);
-
-	//sprintf(DownloaderStartTime, "%d/%d/%d %d:%d:%d", Timeinfo->tm_mon, Timeinfo->tm_mday, Timeinfo->tm_year, Timeinfo->tm_hour, Timeinfo->tm_min, Timeinfo->tm_sec);
-	//DownloadManager.ServerPath = parameters.ServerPath;
-	//DownloadCommandArgument downloadCommandArgument = new DownloadCommandArgument(parameters.Package, parameters.PatchPath);
-	//ThreadD = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)&downloadCommandArgument, 0, 0);
 }
 
 char *Downloader::GetIndexFile(char * url)
@@ -776,8 +837,9 @@ char *Downloader::GetIndexFile(char * url)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
+		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, Progress_Func);
 
-		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
 		/* Check for errors */
 		if (res != CURLE_OK)
