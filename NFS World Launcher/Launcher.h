@@ -53,13 +53,14 @@ private:
 	static Region * R;
 	static User * Logged;
 
+	static int *CheckBox;
+
 	static int region;
 
 	static char *GameDirRegistryKeyPath;
 	static char *GameDirRegistryKeyName;
 	static char *TermsOfService;
 	static char GameDir[MAX_PATH];
-	static char *LanguageText;
 	static char *GameUrl;
 
 	static HKEY hKey;

@@ -40,23 +40,18 @@ void Download(DownloadThread *DT)
 		char *DatFileInTemp = new char[FILENAME_MAX];
 		char *File = new char[FILENAME_MAX];
 		char *TempPathFile = new char[MAX_PATH];
-		char Url[256];
+		char *Url = new char[256];
 		size_t result;
-		int num7;
 
 		sprintf(TempPathFile, "%s%i\\", TempPath, DT->FI[s]->Offset);
 		if (!Utils::FileExists(TempPathFile))
 			CreateDirectory(TempPathFile, NULL);
 
 		Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
-		
-		num7 = DT->FI[s]->ToSection;
+
 		int val2 = DT->FI[s]->Section;
 
-		if (DT->FI[s]->Offset == 0)
-			--num7;
-
-		for (; val2 <= num7; ++val2)
+		for (; val2 <= DT->FI[s]->ToSection; ++val2)
 		{
 			sprintf(DatFile, "section%d.dat", val2);
 			Debug("section%d.dat", val2);
@@ -89,11 +84,11 @@ void Download(DownloadThread *DT)
 					Error("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 				/* always cleanup */
 				curl_easy_cleanup(curl);
-					
+
 			}
+			fclose(fp);
+			delete DatFile;
 		}
-		fclose(fp);
-		delete DatFile;
 
 		if (strcmp(DT->FI[s]->Path, "") != 0)
 			sprintf(File, "%s\\%s\\%s", DT->Path, DT->FI[s]->Path, DT->FI[s]->File);
@@ -103,22 +98,31 @@ void Download(DownloadThread *DT)
 		SizeT srcLen = DT->FI[s]->Compressed - 13;
 		SizeT destLen = DT->FI[s]->Lenght;
 
-//		for (int x = DT->FI[s]->Section; x <= num7; x++)
-//		{
-/*			fp = fopen(DatFileInTemp, "rb");
-			if (NULL != fp)
-			{
-				Debug("Can open the file");
-			}
-			else
-				Debug("Could not open the file");
+		unsigned char Prop[5];
+		unsigned char Arr[13];
+		std::vector<unsigned char> inBuf2;
+		
+		//		for (int x = DT->FI[s]->Section; x <= num7; x++)
+		//		{
+		fp = fopen(DatFileInTemp, "rb");
+		if (NULL != fp)
+		{
+			Debug("Can open the file");
+		}
+		else
+			Debug("Could not open the file");
 
-			result = fread(Lzma, 1, srcLen, fp);
+		fseek(fp, 0L, SEEK_END);
+		long sz = ftell(fp);
+		fseek(fp, 0L, SEEK_SET);
+		std::vector<unsigned char> inBuf(sz);
+		//unsigned char *LZMA = new unsigned char[sz];
+		result = fread(&inBuf[0], sizeof(inBuf[0]), sz, fp);
+		//result = fread(LZMA, 1, sz, fp);
+		if (result != sz)
+			Debug("Reading error");
 
-			if (result != srcLen)
-				Debug("Reading error");
-
-			fclose(fp);
+		fclose(fp);
 	//	}*/
 		/*int num3 = 0;
 		while (num3 < DT->FI[s]->Compressed)
@@ -126,10 +130,8 @@ void Download(DownloadThread *DT)
 			
 		}*/
 
-		unsigned char Prop[5];
-		unsigned char Arr[13];
-		std::vector<unsigned char> inBuf2;
-		
+
+		/*
 		std::ifstream::pos_type size;
 		std::ifstream file;
 		file.open(DatFileInTemp, std::ios::in |std::ios::binary | std::ios::ate);
@@ -139,13 +141,17 @@ void Download(DownloadThread *DT)
 		file.seekg(0, std::ios::beg);
 		file.read((char *)&inBuf[0], size);
 		file.close();
-
+		*/
 
 		for (int index = 0; index < 13; index++)
-			Arr[index] = (int)inBuf.at(DT->FI[s]->Offset + index);
+			Arr[index] = inBuf.at(DT->FI[s]->Offset + index);
 
+//		memcpy(&Arr, LZMA + DT->FI[s]->Offset, 13);
+//		unsigned char *LZMA2 = new unsigned char[DT->FI[s]->Offset + DT->FI[s]->Compressed + 1];
 		for (int index = DT->FI[s]->Offset + 13; index < DT->FI[s]->Offset + DT->FI[s]->Compressed; index++)
 			inBuf2.push_back(inBuf[index]);
+
+//		memcpy(&LZMA2, LZMA + DT->FI[s]->Offset + 13, DT->FI[s]->Offset + DT->FI[s]->Compressed);
 
 		for (int index = 0; index < 5; ++index)
 			Prop[index] = Arr[index];
@@ -162,10 +168,19 @@ void Download(DownloadThread *DT)
 
 		fclose(fp);
 
+		delete Decomress;
 		delete DatFileInTemp;
 		delete File;
+		delete TempPathFile;
+		delete Url;
 	}
-
+	delete DefaultTempPath;
+	delete TempPath;
+	free(DT->Url);
+	free(DT->Path);
+	free(DT->Package);
+	free(DT->FI);
+	delete DT;
 }
 
 void Verify(VerifyArgument *param)
@@ -216,7 +231,6 @@ void Verify(VerifyArgument *param)
 
 	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
 
-	
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
 		char *path3 = 0;
@@ -486,7 +500,7 @@ void Verify(VerifyArgument *param)
 		delete[] File;
 		delete[] str;
 	}
-
+	
 	sprintf(ServerPath, "%s/Tracks", param->ServerPath);
 
 	sprintf(FilePath, "%s/index.xml", ServerPath);
@@ -794,12 +808,13 @@ void Verify(VerifyArgument *param)
 	memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
 	DT->Url = (char *)malloc(256);
 	strcpy(DT->Url, param->ServerPath);
-	
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)DT, 0, 0);
 
 	delete path1;
 	delete path;
+	delete param->ServerPath;
+	delete param->Package;
 	delete param;
 	delete[] languagePackage;
 }
@@ -808,9 +823,9 @@ void Downloader::StartVerificationAndDownload(bool FullD, char* Package, char* S
 {
 	VerifyArgument *Vparam = new VerifyArgument;
 
-	Vparam->ServerPath = (char *)malloc(256);
+	Vparam->ServerPath = new char[256];//(char *)malloc(256);
 	memcpy(Vparam->ServerPath, ServerPath, 256);
-	Vparam->Package = (char *)malloc(3);
+	Vparam->Package = new char[3];//(char *)malloc(3);
 	strcpy(Vparam->Package, Package);//en ; de ; es ; fr ; ru ; 
 	Vparam->FullDownload = FullD;
 

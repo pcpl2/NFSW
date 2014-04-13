@@ -8,9 +8,11 @@ HWND * Launcher::Window = new HWND[1];
 HWND * Launcher::Button = new HWND[8];
 HWND * Launcher::Edit = new HWND[1];
 HWND * Launcher::Text = new HWND[5];
-HWND * Launcher::Combo = new HWND[0];
+HWND * Launcher::Combo = new HWND[2];
 
 int Launcher::region;
+
+int *Launcher::CheckBox = new int[5];
 
 char Login[128] = { 0 };
 char Password[128] = { 0 };
@@ -31,7 +33,6 @@ HKEY Launcher::hKey = 0;
 char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Speed World";
 char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
 char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt"; //GetUserDefaultLangID _de ; _es ; _fr ; _pl ; _pt ; _ru ; _th ; _tr ; _zh ;  _zh_chs
-char *Launcher::LanguageText = new char[10];
 char Launcher::GameDir[MAX_PATH] = { 0 };
 char *Launcher::GameUrl = (char *)malloc(256);
 
@@ -40,7 +41,7 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	HFONT hFont = CreateFont(15, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
-	//Launcher::LanguageText = { 'English', 'Germany', 'Spanish', 'French', 'Polish' 'Russian', 'Portuguese', 'Thai', 'Turkish', 'Chinese', 'Chinese_Simplified' };
+	char * LanguageText[] = { "English", "Germany", "Spanish", "French", "Polish", "Russian", "Portuguese", "Thai", "Turkish", "Chinese", "Chinese_Simplified" };
 
 	WNDCLASSEX wc;
 
@@ -106,13 +107,11 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	wc.lpszClassName = "NFSWL_Options";
 	RegisterClassEx(&wc);
 
-	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_Options", "Options", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 400, 500, NULL, NULL, hInstance, NULL);
-	Text[2] = CreateWindowEx(NULL, WC_STATIC, "Select a language :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 90, 20, 80, 25, Window[1], NULL, hInstance, NULL);
+	Window[1] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_Options", "Options", WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, NULL, NULL, hInstance, NULL);
+	Text[2] = CreateWindowEx(NULL, WC_STATIC, "Select a language :", WS_VISIBLE | WS_CHILD | SS_SIMPLE, 90, 20, 115, 25, Window[1], NULL, hInstance, NULL);
 	Combo[1] = CreateWindowEx(NULL, WC_COMBOBOX, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWN, 90, 40, 200, 100, Window[1], NULL, hInstance, NULL);
-
-	Button[3] = CreateWindowEx(0, WC_BUTTON, "Full Download", WS_CHILD | WS_VISIBLE | BS_CHECKBOX,
-		100, 100, 150, 30, Window[1], NULL, hInstance, NULL);
-
+	Button[3] = CreateWindowEx(NULL, WC_BUTTON, "Full Download", WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 90, 70, 150, 30, Window[1], NULL, hInstance, NULL);
+	Button[4] = CreateWindowEx(NULL, WC_BUTTON, "Save & close", WS_CHILD | WS_VISIBLE, 120, 220, 150, 30, Window[1], (HMENU)ID_Button4, hInstance, NULL);
 
 	for (int i = 0; i < sizeof(R); i++)
 	{
@@ -124,9 +123,9 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	SendMessage(Combo[0], CB_SETCURSEL, (WPARAM)0, 0);
 
-	for (int i = 0; i < sizeof(Language); i++)
+	for (int i = 0; i < 11; i++)
 	{
-		SendMessage(Combo[1], CB_ADDSTRING, 0, (LPARAM)"");
+		SendMessage(Combo[1], CB_ADDSTRING, 0, (LPARAM)LanguageText[i]);
 	}
 
 	SendMessage(Combo[1], CB_SETCURSEL, (WPARAM)0, 0);
@@ -422,6 +421,7 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				ShowWindow(Button[0], SW_HIDE);
 				ShowWindow(Button[1], SW_HIDE);
 				ShowWindow(Button[2], SW_SHOW);
+	//			D.StartVerificationAndDownload(true, "en", GameUrl);
 			}
 			break;
 		case ID_Button2:
@@ -471,8 +471,8 @@ void Launcher::remove()
 {
 	delete[] R;
 	delete[] Logged;
-	delete[] LanguageText;
 	free(GameUrl);
+	DeleteObject(Window);
 	/*HWND * Launcher::Window = new HWND[1];
 HWND * Launcher::Button = new HWND[4];
 HWND * Launcher::Edit = new HWND[1];

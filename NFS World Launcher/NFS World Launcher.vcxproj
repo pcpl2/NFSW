@@ -86,6 +86,7 @@
     <ClCompile Include="..\libs\HTTP\HTTP.cpp" />
     <ClCompile Include="..\libs\logger\Logger.cpp" />
     <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp" />
+    <ClCompile Include="Autoupdate.cpp" />
     <ClCompile Include="Downloader.cpp" />
     <ClCompile Include="Launcher.cpp" />
     <ClCompile Include="main.cpp" />
@@ -104,6 +105,7 @@
     <ClInclude Include="..\libs\HTTP\HTTP.h" />
     <ClInclude Include="..\libs\logger\Logger.h" />
     <ClInclude Include="..\libs\tinyxml\tinyxml2.h" />
+    <ClInclude Include="Autoupdate.h" />
     <ClInclude Include="Downloader.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="Launcher.h" />

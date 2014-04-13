@@ -57,6 +57,9 @@
     <ClCompile Include="..\libs\HTTP\HTTP.cpp">
       <Filter>lib\HTTP</Filter>
     </ClCompile>
+    <ClCompile Include="Autoupdate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes.h">
@@ -109,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="..\libs\HTTP\HTTP.h">
       <Filter>lib\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="Autoupdate.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
