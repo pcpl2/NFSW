@@ -51,9 +51,9 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;LzmaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;lib_json.lib;LzmaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;..\libs\cryptopp562\Debug\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;..\libs\cryptopp562\Debug\;..\libs\jsoncpp0.5.0\build\debug\lib_json</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCPMTD;MSVCRT;</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -75,10 +75,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;lib_json.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;..\libs\cryptopp562\Release\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;..\libs\cryptopp562\Release\;..\libs\jsoncpp0.5.0\build\release\lib_json</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
