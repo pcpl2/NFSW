@@ -11,7 +11,7 @@ Downloader::~Downloader()
 
 }
 
-int Progress_Func(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded)
+int Progress_Func(void *ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded)
 {
 	Debug("%d / %d", (int)NowDownloaded, (int)TotalToDownload);
 	return 0;
@@ -209,7 +209,7 @@ void Verify(VerifyArgument *param)
 		memcpy(languagePackage, param->Package, 3);
 
 	sprintf(FilePath, "%sindex.xml", ServerPath);
-	char * IndexCharFile = D.GetIndexFile(FilePath);
+	char *IndexCharFile = D.GetIndexFile(FilePath);
 
 	if (sizeof(IndexCharFile) < NULL)
 	{
@@ -841,7 +841,7 @@ char *Downloader::GetIndexFile(char * url)
 	CURLcode res;
 	curl = curl_easy_init();
 
-	struct BufferStruct output;
+	Utils::BufferStruct output;
 	output.buffer = NULL;
 	output.size = 0;
 	if (curl)

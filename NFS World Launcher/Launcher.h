@@ -1,26 +1,5 @@
 #pragma once
 
-struct BufferStruct
-{
-	char * buffer;
-	size_t size;
-};
-
-struct Region
-{
-	int Id;
-	char Name[20];
-	char ShardName[20];
-	char Url[50];
-};
-
-struct User
-{
-	char remoteUserId[12];
-	char securityToken[50];
-	char userId[10];
-};
-
 enum Language{
 	English,
 	Germany,
@@ -38,6 +17,21 @@ enum Language{
 class Launcher
 {
 private:
+	struct Region
+	{
+		int Id;
+		char Name[20];
+		char ShardName[20];
+		char Url[50];
+	};
+
+	struct User
+	{
+		char remoteUserId[12];
+		char securityToken[50];
+		char userId[10];
+	};
+
 	#define ID_Button1 501
 	#define ID_Button2 502
 	#define ID_Button3 503

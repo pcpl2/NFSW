@@ -4,11 +4,11 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-HWND * Launcher::Window = new HWND[1];
-HWND * Launcher::Button = new HWND[8];
-HWND * Launcher::Edit = new HWND[1];
-HWND * Launcher::Text = new HWND[5];
-HWND * Launcher::Combo = new HWND[2];
+HWND *Launcher::Window = new HWND[1];
+HWND *Launcher::Button = new HWND[8];
+HWND *Launcher::Edit = new HWND[1];
+HWND *Launcher::Text = new HWND[5];
+HWND *Launcher::Combo = new HWND[2];
 
 int Launcher::region;
 
@@ -17,8 +17,8 @@ int *Launcher::CheckBox = new int[5];
 char Login[128] = { 0 };
 char Password[128] = { 0 };
 
-Region * Launcher::R = new Region[4];
-User * Launcher::Logged = new User[0];
+Launcher::Region *Launcher::R = new Region[4];
+Launcher::User *Launcher::Logged = new User[0];
 
 HKEY Launcher::hKey = 0;
 
@@ -41,7 +41,7 @@ void Launcher::Initialize(HINSTANCE hInstance)
 	HFONT hFont = CreateFont(15, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
-	char * LanguageText[] = { "English", "Germany", "Spanish", "French", "Polish", "Russian", "Portuguese", "Thai", "Turkish", "Chinese", "Chinese_Simplified" };
+	char *LanguageText[] = { "English", "Germany", "Spanish", "French", "Polish", "Russian", "Portuguese", "Thai", "Turkish", "Chinese", "Chinese_Simplified" };
 
 	WNDCLASSEX wc;
 
@@ -179,14 +179,14 @@ bool Launcher::SignIn(char *login, char *password, char *server, char *region)
 {
 	CURL *curl;
 	CURLcode res;
-	struct curl_slist *headers = NULL;
+	curl_slist *headers = NULL;
 	curl = curl_easy_init();
 	char postthis[256];
 	char url[69];
 
 	sprintf(postthis, "<Credentials xmlns=\"http://schemas.datacontract.org/2004/07/Victory.DataLayer.Serialization\"><Email>%s</Email><Password>%s</Password><Region>%s</Region></Credentials>", login, password, region);
 	sprintf(url, "%s/User/AuthenticateUser2", server);
-	BufferStruct output;
+	Utils::BufferStruct output;
 	output.buffer = NULL;
 	output.size = 0;
 	if (curl)
@@ -275,7 +275,7 @@ void Launcher::getshardinfo()
 	CURLcode res;
 	curl = curl_easy_init();
 
-	struct BufferStruct output;
+	Utils::BufferStruct output;
 	output.buffer = NULL;
 	output.size = 0;
 	if (curl)
@@ -311,7 +311,7 @@ void Launcher::getshardinfo()
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
 	free(output.buffer);
-	tinyxml2::XMLElement* ShardInfo = doc.FirstChildElement("ArrayOfShardInfo")->FirstChildElement("ShardInfo");
+	tinyxml2::XMLElement *ShardInfo = doc.FirstChildElement("ArrayOfShardInfo")->FirstChildElement("ShardInfo");
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
@@ -329,7 +329,7 @@ void Launcher::launcherinfo()
 	CURLcode res;
 	curl = curl_easy_init();
 
-	struct BufferStruct output;
+	Utils::BufferStruct output;
 	output.buffer = NULL;
 	output.size = 0;
 	if (curl)
@@ -365,7 +365,7 @@ void Launcher::launcherinfo()
 	tinyxml2::XMLDocument doc;
 	doc.Parse(output.buffer);
 	free(output.buffer);
-	tinyxml2::XMLElement* gameurl = doc.FirstChildElement("configuration")->FirstChildElement("cdn")->FirstChildElement("game");
+	tinyxml2::XMLElement *gameurl = doc.FirstChildElement("configuration")->FirstChildElement("cdn")->FirstChildElement("game");
 	strcpy(Launcher::GameUrl, gameurl->GetText());
 }
 
