@@ -11,7 +11,6 @@ HWND *Launcher::Text = new HWND[5];
 HWND *Launcher::Combo = new HWND[2];
 
 int Launcher::region;
-
 int *Launcher::CheckBox = new int[5];
 
 char Login[128] = { 0 };
@@ -34,7 +33,7 @@ char *Launcher::GameDirRegistryKeyPath = "SOFTWARE\\Electronic Arts\\Need For Sp
 char *Launcher::GameDirRegistryKeyName = "GameInstallDir";
 char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world/euala.txt"; //GetUserDefaultLangID _de ; _es ; _fr ; _pl ; _pt ; _ru ; _th ; _tr ; _zh ;  _zh_chs
 char Launcher::GameDir[MAX_PATH] = { 0 };
-char *Launcher::GameUrl = (char *)malloc(256);
+char *Launcher::GameUrl = new char[256];
 
 void Launcher::Initialize(HINSTANCE hInstance)
 {
@@ -120,14 +119,12 @@ void Launcher::Initialize(HINSTANCE hInstance)
 		sprintf(buffer, "%s - %s", R[i].ShardName, R[i].Name);
 		SendMessage(Combo[0], CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
-
 	SendMessage(Combo[0], CB_SETCURSEL, (WPARAM)0, 0);
 
 	for (int i = 0; i < 11; i++)
 	{
 		SendMessage(Combo[1], CB_ADDSTRING, 0, (LPARAM)LanguageText[i]);
 	}
-
 	SendMessage(Combo[1], CB_SETCURSEL, (WPARAM)0, 0);
 	
 	for (int i = 0; i < sizeof(Button); i++)
@@ -201,15 +198,11 @@ bool Launcher::SignIn(char *login, char *password, char *server, char *region)
 		Debug("Connect to %s", url);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)-1);
-
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
-
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 
-		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
 		/* Check for errors */
 		if (res != CURLE_OK)
@@ -218,14 +211,7 @@ bool Launcher::SignIn(char *login, char *password, char *server, char *region)
 				curl_easy_strerror(res));
 			return false;
 		}
-
-		/* always cleanup */
 		curl_easy_cleanup(curl);
-	}
-	else
-	{
-		MessageBox(NULL, "Cannot create curl", "NFSW - Error", MB_ICONERROR);
-		return false;
 	}
 
 	while (output.buffer == 0)
@@ -283,22 +269,17 @@ void Launcher::getshardinfo()
 
 		curl_easy_setopt(curl, CURLOPT_URL, "https://94.236.124.241/nfsw/Engine.svc/getshardinfo");
 		Debug("Connect to https://94.236.124.241/nfsw/Engine.svc/getshardinfo");
-
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 
-		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
 		/* Check for errors */
 		if (res != CURLE_OK)
 			Error("curl_easy_perform() failed: %s\n",
 			curl_easy_strerror(res));
 
-
-		/* always cleanup */
 		curl_easy_cleanup(curl);
 	}
 
@@ -337,22 +318,16 @@ void Launcher::launcherinfo()
 
 		curl_easy_setopt(curl, CURLOPT_URL, "https://94.236.124.241/nfsw/Engine.svc/launcherinfo");
 		Debug("Connect to https://94.236.124.241/nfsw/Engine.svc/launcherinfo");
-
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
-
-		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
 		/* Check for errors */
 		if (res != CURLE_OK)
 			Error("curl_easy_perform() failed: %s\n",
 			curl_easy_strerror(res));
 
-
-		/* always cleanup */
 		curl_easy_cleanup(curl);
 	}
 
@@ -471,7 +446,7 @@ void Launcher::remove()
 {
 	delete[] R;
 	delete[] Logged;
-	free(GameUrl);
+	delete GameUrl;
 	DeleteObject(Window);
 	/*HWND * Launcher::Window = new HWND[1];
 HWND * Launcher::Button = new HWND[4];

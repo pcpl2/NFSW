@@ -37,15 +37,15 @@ private:
 	#define ID_Button3 503
 	#define ID_Button4 504
 
-	static HWND * Window;
+	static HWND *Window;
 
-	static HWND * Button;
-	static HWND * Edit;
-	static HWND * Text;
-	static HWND * Combo;
+	static HWND *Button;
+	static HWND *Edit;
+	static HWND *Text;
+	static HWND *Combo;
 
-	static Region * R;
-	static User * Logged;
+	static Region *R;
+	static User *Logged;
 
 	static int *CheckBox;
 
@@ -75,7 +75,7 @@ public:
 	static void getshardinfo();
 	static void launcherinfo();
 
-	inline static char* GetGameDir() { return GameDir; };
+	inline static char *GetGameDir() { return GameDir; };
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI OptionsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

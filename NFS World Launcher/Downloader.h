@@ -46,22 +46,16 @@ private:
 
 	long CompressedLength;
 	long TotalToDownload;
-	
-	/*
-	const int LZMAOutPropsSize = 5;
-	const int LZMALengthSize = 8;
-	const int LZMAHeaderSize = 13;
-	*/
+
 public:
 	Downloader();
 	~Downloader();
 
-	void StartVerificationAndDownload(bool FullD, char* Package, char* ServerPath);
+	void StartVerificationAndDownload(bool FullD, char *Package, char *ServerPath);
 
 	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
 
-	char * GetIndexFile(char * url);
-
+	char * GetIndexFile(char *url);
 };
 
 

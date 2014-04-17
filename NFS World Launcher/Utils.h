@@ -4,7 +4,7 @@ public:
 
 	struct BufferStruct
 	{
-		char * buffer;
+		char *buffer;
 		size_t size;
 	};
 

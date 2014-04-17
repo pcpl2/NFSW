@@ -17,6 +17,12 @@ int Progress_Func(void *ptr, double TotalToDownload, double NowDownloaded, doubl
 	return 0;
 }
 
+void ClearTmp()
+{
+
+
+}
+
 void Download(DownloadThread *DT)
 {
 	short i = DT->i;
@@ -50,11 +56,10 @@ void Download(DownloadThread *DT)
 		Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
 
 		int val2 = DT->FI[s]->Section;
-
 		for (; val2 <= DT->FI[s]->ToSection; ++val2)
 		{
 			sprintf(DatFile, "section%d.dat", val2);
-			Debug("section%d.dat", val2);
+			Debug("%s", DatFile);
 
 			if (DT->FI[s]->LanguagePackage)
 			{
@@ -82,12 +87,11 @@ void Download(DownloadThread *DT)
 
 				if (res != CURLE_OK)
 					Error("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-				/* always cleanup */
+
 				curl_easy_cleanup(curl);
 
 			}
 			fclose(fp);
-			delete DatFile;
 		}
 
 		if (strcmp(DT->FI[s]->Path, "") != 0)
@@ -98,59 +102,52 @@ void Download(DownloadThread *DT)
 		SizeT srcLen = DT->FI[s]->Compressed - 13;
 		SizeT destLen = DT->FI[s]->Lenght;
 
-		unsigned char Prop[5];
-		unsigned char Arr[13];
+		unsigned char *Prop = new unsigned char[5];
+		unsigned char *Arr = new unsigned char[13];
+		std::vector<unsigned char> inBuf1;
 		std::vector<unsigned char> inBuf2;
 		
-		//		for (int x = DT->FI[s]->Section; x <= num7; x++)
-		//		{
-		fp = fopen(DatFileInTemp, "rb");
-		if (NULL != fp)
+		for (int x = DT->FI[s]->Section; x <= DT->FI[s]->ToSection; x++)
 		{
-			Debug("Can open the file");
+			sprintf(DatFile, "section%d.dat", x);
+			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
+
+			fp = fopen(DatFileInTemp, "rb");
+			if (NULL != fp)
+			{
+				Debug("Can open the file : %s", DatFile);
+			}
+			else
+				Debug("Could not open the file : %s", DatFile);
+
+			fseek(fp, 0L, SEEK_END);
+			long sz = ftell(fp);
+			fseek(fp, 0L, SEEK_SET);
+			std::vector<unsigned char> inBuf(sz);
+			//unsigned char *LZMA = new unsigned char[sz];
+			result = fread(&inBuf[0], sizeof(inBuf[0]), sz, fp);
+			//result = fread(LZMA, 1, sz, fp);
+			if (result != sz)
+				Debug("Reading error");
+			fclose(fp);
+
+			for (int y = 0; y < sz; y++)
+			{
+				inBuf1.push_back(inBuf.at(y));
+			}
 		}
-		else
-			Debug("Could not open the file");
-
-		fseek(fp, 0L, SEEK_END);
-		long sz = ftell(fp);
-		fseek(fp, 0L, SEEK_SET);
-		std::vector<unsigned char> inBuf(sz);
-		//unsigned char *LZMA = new unsigned char[sz];
-		result = fread(&inBuf[0], sizeof(inBuf[0]), sz, fp);
-		//result = fread(LZMA, 1, sz, fp);
-		if (result != sz)
-			Debug("Reading error");
-
-		fclose(fp);
-	//	}*/
-		/*int num3 = 0;
-		while (num3 < DT->FI[s]->Compressed)
-		{
-			
-		}*/
-
-
-		/*
-		std::ifstream::pos_type size;
-		std::ifstream file;
-		file.open(DatFileInTemp, std::ios::in |std::ios::binary | std::ios::ate);
-
-		size = file.tellg();
-		std::vector<unsigned char> inBuf(size);
-		file.seekg(0, std::ios::beg);
-		file.read((char *)&inBuf[0], size);
-		file.close();
-		*/
+		delete DatFileInTemp;
+		delete DatFile;
 
 		for (int index = 0; index < 13; index++)
-			Arr[index] = inBuf.at(DT->FI[s]->Offset + index);
+			Arr[index] = inBuf1.at(DT->FI[s]->Offset + index);
 
 //		memcpy(&Arr, LZMA + DT->FI[s]->Offset, 13);
 //		unsigned char *LZMA2 = new unsigned char[DT->FI[s]->Offset + DT->FI[s]->Compressed + 1];
 		for (int index = DT->FI[s]->Offset + 13; index < DT->FI[s]->Offset + DT->FI[s]->Compressed; index++)
-			inBuf2.push_back(inBuf[index]);
+			inBuf2.push_back(inBuf1[index]);
 
+		inBuf1.clear();
 //		memcpy(&LZMA2, LZMA + DT->FI[s]->Offset + 13, DT->FI[s]->Offset + DT->FI[s]->Compressed);
 
 		for (int index = 0; index < 5; ++index)
@@ -158,18 +155,20 @@ void Download(DownloadThread *DT)
 		long num6 = 0L;
 		for (int index = 0; index < 8; ++index)
 			num6 += (long)((int)Arr[index + 5] << 8 * index);
+
+		delete Arr;
 		unsigned char* Decomress = new unsigned char[destLen];
 
 		int ok = LzmaUncompress(Decomress, &destLen, &inBuf2[0], &srcLen, Prop, LZMA_PROPS_SIZE);
 
+		delete Prop;
+		inBuf2.clear();
+
 		fp = fopen(File, "wb+");
-
 		fwrite(Decomress, 1, destLen, fp);
-
 		fclose(fp);
 
 		delete Decomress;
-		delete DatFileInTemp;
 		delete File;
 		delete TempPathFile;
 		delete Url;
@@ -229,8 +228,8 @@ void Verify(VerifyArgument *param)
 	if (!Utils::FileExists(path1))
 		CreateDirectory(path1, NULL);
 
-	tinyxml2::XMLElement* ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
-
+	tinyxml2::XMLElement *ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+	
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
 		char *path3 = 0;
@@ -819,7 +818,7 @@ void Verify(VerifyArgument *param)
 	delete[] languagePackage;
 }
 
-void Downloader::StartVerificationAndDownload(bool FullD, char* Package, char* ServerPath)
+void Downloader::StartVerificationAndDownload(bool FullD, char *Package, char *ServerPath)
 {
 	VerifyArgument *Vparam = new VerifyArgument;
 
@@ -831,12 +830,10 @@ void Downloader::StartVerificationAndDownload(bool FullD, char* Package, char* S
 
 	Info("Starting verify");
 	ThreadV = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Verify, Vparam, 0, 0);
-
 }
 
-char *Downloader::GetIndexFile(char * url)
+char *Downloader::GetIndexFile(char *url)
 {
-	Debug("Downloading %s", url);
 	CURL *curl;
 	CURLcode res;
 	curl = curl_easy_init();
@@ -846,22 +843,21 @@ char *Downloader::GetIndexFile(char * url)
 	output.size = 0;
 	if (curl)
 	{
-
 		curl_easy_setopt(curl, CURLOPT_URL, url);
+		Debug("Downloading %s", url);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&output);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
 		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, Progress_Func);
-
 		res = curl_easy_perform(curl);
+
 		/* Check for errors */
 		if (res != CURLE_OK)
 			Error("curl_easy_perform() failed: %s\n",
 			curl_easy_strerror(res));
 		
-		/* always cleanup */
 		curl_easy_cleanup(curl);
 	}
 
