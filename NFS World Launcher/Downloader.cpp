@@ -23,7 +23,7 @@ void ClearTmp()
 
 }
 
-void Download(DownloadThread *DT)
+void Downloader::Download(DownloadThread *DT)
 {
 	short i = DT->i;
 	char *DefaultTempPath = new char[MAX_PATH];
@@ -49,15 +49,24 @@ void Download(DownloadThread *DT)
 		char *Url = new char[256];
 		size_t result;
 
-		sprintf(TempPathFile, "%s%i\\", TempPath, DT->FI[s]->Offset);
+		if (DT->FI[s]->LanguagePackage)
+		{
+			sprintf(TempPathFile, "%s%s\\", TempPath, DT->Package);
+		}
+		else
+		{
+			sprintf(TempPathFile, "%s\\", TempPath);
+		}
+
 		if (!Utils::FileExists(TempPathFile))
 			CreateDirectory(TempPathFile, NULL);
 
 		Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
+	//	int Fi = 0;
 
-		int val2 = DT->FI[s]->Section;
-		for (; val2 <= DT->FI[s]->ToSection; ++val2)
+		for (int val2 = DT->FI[s]->Section; val2 <= DT->FI[s]->ToSection; ++val2)
 		{
+		//	Fi++;
 			sprintf(DatFile, "section%d.dat", val2);
 			Debug("%s", DatFile);
 
@@ -73,31 +82,40 @@ void Download(DownloadThread *DT)
 			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
 
 			curl = curl_easy_init();
-
-			fp = fopen(DatFileInTemp, "wb+");
-			if (curl)
+			if (!Utils::FileExists(DatFileInTemp))
 			{
-				Debug("Downloading %s", Url);
-				curl_easy_setopt(curl, CURLOPT_URL, Url);
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-				curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
-				curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, Progress_Func);
-				res = curl_easy_perform(curl);
+				fp = fopen(DatFileInTemp, "wb+");
+				if (curl)
+				{
+					Debug("Downloading %s", Url);
+					curl_easy_setopt(curl, CURLOPT_URL, Url);
+					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::WriteDataCallback);
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+					curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
+					curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, Progress_Func);
+					res = curl_easy_perform(curl);
 
-				if (res != CURLE_OK)
-					Error("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+					if (res != CURLE_OK)
+						Error("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 
-				curl_easy_cleanup(curl);
-
+					curl_easy_cleanup(curl);
+				}
+				fclose(fp);
 			}
-			fclose(fp);
 		}
 
 		if (strcmp(DT->FI[s]->Path, "") != 0)
 			sprintf(File, "%s\\%s\\%s", DT->Path, DT->FI[s]->Path, DT->FI[s]->File);
 		else
 			sprintf(File, "%s\\%s", DT->Path, DT->FI[s]->File);
+
+		char *Directory = new char[MAX_PATH];
+		sprintf(Directory, "%s\\%s", DT->Path, DT->FI[s]->Path);
+
+		if (!Utils::FileExists(Directory))
+			CreateDirectory(Directory, NULL);
+
+		delete Directory;
 
 		SizeT srcLen = DT->FI[s]->Compressed - 13;
 		SizeT destLen = DT->FI[s]->Lenght;
@@ -106,7 +124,9 @@ void Download(DownloadThread *DT)
 		unsigned char *Arr = new unsigned char[13];
 		std::vector<unsigned char> inBuf1;
 		std::vector<unsigned char> inBuf2;
+	/*	unsigned char *LZMA = new unsigned char[1048576 * Fi];
 		
+		long lastsz = 0;*/
 		for (int x = DT->FI[s]->Section; x <= DT->FI[s]->ToSection; x++)
 		{
 			sprintf(DatFile, "section%d.dat", x);
@@ -123,18 +143,24 @@ void Download(DownloadThread *DT)
 			fseek(fp, 0L, SEEK_END);
 			long sz = ftell(fp);
 			fseek(fp, 0L, SEEK_SET);
+			/*unsigned char *FileData = new unsigned char[sz];
+			result = fread(FileData, 1, sz, fp);*/
 			std::vector<unsigned char> inBuf(sz);
-			//unsigned char *LZMA = new unsigned char[sz];
 			result = fread(&inBuf[0], sizeof(inBuf[0]), sz, fp);
-			//result = fread(LZMA, 1, sz, fp);
+
 			if (result != sz)
 				Debug("Reading error");
 			fclose(fp);
+		//	lastsz = lastsz + sz;
 
 			for (int y = 0; y < sz; y++)
 			{
 				inBuf1.push_back(inBuf.at(y));
 			}
+			/*
+			memcpy(LZMA + sizeof(lastsz), FileData, sizeof(FileData));
+			delete FileData;*/
+			inBuf.clear();
 		}
 		delete DatFileInTemp;
 		delete DatFile;
@@ -142,8 +168,8 @@ void Download(DownloadThread *DT)
 		for (int index = 0; index < 13; index++)
 			Arr[index] = inBuf1.at(DT->FI[s]->Offset + index);
 
-//		memcpy(&Arr, LZMA + DT->FI[s]->Offset, 13);
-//		unsigned char *LZMA2 = new unsigned char[DT->FI[s]->Offset + DT->FI[s]->Compressed + 1];
+/*		memcpy(&Arr, LZMA + DT->FI[s]->Offset, 13);
+		unsigned char *LZMA2 = new unsigned char[DT->FI[s]->Offset + DT->FI[s]->Compressed + 1];*/
 		for (int index = DT->FI[s]->Offset + 13; index < DT->FI[s]->Offset + DT->FI[s]->Compressed; index++)
 			inBuf2.push_back(inBuf1[index]);
 
@@ -152,9 +178,8 @@ void Download(DownloadThread *DT)
 
 		for (int index = 0; index < 5; ++index)
 			Prop[index] = Arr[index];
-		long num6 = 0L;
-		for (int index = 0; index < 8; ++index)
-			num6 += (long)((int)Arr[index + 5] << 8 * index);
+
+	//	memcpy(Prop, Arr, 5);
 
 		delete Arr;
 		unsigned char* Decomress = new unsigned char[destLen];
@@ -180,6 +205,7 @@ void Download(DownloadThread *DT)
 	free(DT->Package);
 	free(DT->FI);
 	delete DT;
+	ExitThread(0);
 }
 
 void Verify(VerifyArgument *param)
@@ -187,8 +213,6 @@ void Verify(VerifyArgument *param)
 	//en ; de ; es ; fr ; ru ; 
 	USING_NAMESPACE(CryptoPP)
 	USING_NAMESPACE(Weak1)
-
-	Downloader::SetVerifying(true);
 
 	char *languagePackage = new char[3];
 	char *path = new char[MAX_PATH];
@@ -354,6 +378,8 @@ void Verify(VerifyArgument *param)
 		delete[] str;
 	}
 
+	tos = false;
+
 	if (sizeof(languagePackage) > NULL)
 		sprintf(ServerPath, "%s/%s", param->ServerPath, languagePackage);
 
@@ -500,6 +526,8 @@ void Verify(VerifyArgument *param)
 		delete[] str;
 	}
 	
+	tos = false;
+
 	sprintf(ServerPath, "%s/Tracks", param->ServerPath);
 
 	sprintf(FilePath, "%s/index.xml", ServerPath);
@@ -643,6 +671,8 @@ void Verify(VerifyArgument *param)
 		delete[] File;
 		delete[] str;
 	}
+
+	tos = false;
 
 	if (FullDownload)
 	{
@@ -793,7 +823,15 @@ void Verify(VerifyArgument *param)
 
 	for (short s = 0; s < i; s++)
 	{
-		Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection,  FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+		if (FI[s]->ToSection == 0)
+		{
+			FI[s]->ToSection = FI[s]->Section;
+			Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+		}
+		else
+		{
+			Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\n", FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+		}
 	}
 
 	DownloadThread *DT = new DownloadThread;
@@ -807,8 +845,8 @@ void Verify(VerifyArgument *param)
 	memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
 	DT->Url = (char *)malloc(256);
 	strcpy(DT->Url, param->ServerPath);
-
-	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Download, (LPVOID)DT, 0, 0);
+	
+	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)D.Download, (LPVOID)DT, 0, 0);
 
 	delete path1;
 	delete path;
@@ -816,15 +854,16 @@ void Verify(VerifyArgument *param)
 	delete param->Package;
 	delete param;
 	delete[] languagePackage;
+	ExitThread(0);
 }
 
 void Downloader::StartVerificationAndDownload(bool FullD, char *Package, char *ServerPath)
 {
 	VerifyArgument *Vparam = new VerifyArgument;
 
-	Vparam->ServerPath = new char[256];//(char *)malloc(256);
+	Vparam->ServerPath = new char[256];
 	memcpy(Vparam->ServerPath, ServerPath, 256);
-	Vparam->Package = new char[3];//(char *)malloc(3);
+	Vparam->Package = new char[3];
 	strcpy(Vparam->Package, Package);//en ; de ; es ; fr ; ru ; 
 	Vparam->FullDownload = FullD;
 

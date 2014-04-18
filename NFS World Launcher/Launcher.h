@@ -38,7 +38,6 @@ private:
 	#define ID_Button4 504
 
 	static HWND *Window;
-
 	static HWND *Button;
 	static HWND *Edit;
 	static HWND *Text;
@@ -67,7 +66,6 @@ public:
 	static bool Pulse();
 
 	static bool SignIn(char *login, char *password, char *server, char *region);
-
 	static int StartGame(char *login, char *password, char *url, char *region);
 
 	static bool GetGameDirFromRegistry();

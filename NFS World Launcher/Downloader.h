@@ -35,25 +35,14 @@ protected:
 private:
 	static Downloader instance;
 
-	bool Verifying;
-	bool DownloadQueueActive;
-	bool Downloading;
-	
-
-	char *CurrentLocalVersion;
-	char *CurrentServerVersion;
-	char *DownloaderStartTime;
-
-	long CompressedLength;
-	long TotalToDownload;
-
 public:
 	Downloader();
 	~Downloader();
 
 	void StartVerificationAndDownload(bool FullD, char *Package, char *ServerPath);
 
-	static inline void SetVerifying(bool verifying){ Downloader D;  D.Verifying = verifying; }
+	static void Download(DownloadThread *DT);
+	static void Verify(VerifyArgument *param);
 
 	char * GetIndexFile(char *url);
 };
