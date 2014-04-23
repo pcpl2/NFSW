@@ -1,5 +1,7 @@
 #include <includes.h>
 
+Launcher *launcher = 0;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdLine)
 {
 	HANDLE hMutex = CreateMutex(NULL, FALSE, "Jestem Zajebisty");
@@ -18,9 +20,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	freopen("CONIN$", "r", stdin);
 #endif
 	Logger::Init("launcher.log");
-	Launcher::Initialize(hInstance);
-	while (Launcher::Pulse());
-	Launcher::remove();
+	launcher = new Launcher;
+	//Launcher::Initialize(hInstance);
+	launcher->Initialize(hInstance);
+	while (launcher->Pulse());
+	//Launcher::remove();
+	SAFE_DELETE(launcher);
 	_CrtDumpMemoryLeaks();
 	return 1;
 }

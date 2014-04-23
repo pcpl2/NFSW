@@ -17,6 +17,8 @@ enum Language{
 class Launcher
 {
 private:
+	static Launcher *instance;
+
 	struct Region
 	{
 		int Id;
@@ -42,13 +44,14 @@ private:
 	static HWND *Edit;
 	static HWND *Text;
 	static HWND *Combo;
+	static HWND *ProgressBar;
+
+	static HKEY hKey;
 
 	static Region *R;
 	static User *Logged;
 
 	static int *CheckBox;
-
-	static int region;
 
 	static char *GameDirRegistryKeyPath;
 	static char *GameDirRegistryKeyName;
@@ -56,17 +59,21 @@ private:
 	static char GameDir[MAX_PATH];
 	static char *GameUrl;
 
-	static HKEY hKey;
+	static bool SevenOrNewer;
 public:
+	Launcher();
+	~Launcher();
 
 	static void Initialize(HINSTANCE hInstance);
+
+	static Launcher& Get();
 
 	static void remove();
 
 	static bool Pulse();
 
 	static bool SignIn(char *login, char *password, char *server, char *region);
-	static int StartGame(char *login, char *password, char *url, char *region);
+	static int StartGame(char *SecurityToken, char *UserId, char *Server, char *Region);
 
 	static bool GetGameDirFromRegistry();
 
@@ -74,6 +81,11 @@ public:
 	static void launcherinfo();
 
 	inline static char *GetGameDir() { return GameDir; };
+
+	inline static void SetMarqueeProgressBar(int ProgressBar, bool a) { SendMessage(Launcher::ProgressBar[ProgressBar], PBM_SETMARQUEE, a ? 1 : 0, 0); }
+	inline static void SetRangeProgressBar(int ProgressBar, int From, int To) { SendMessage(Launcher::ProgressBar[ProgressBar], PBM_SETRANGE, 0, (LPARAM)MAKELONG(From, To)); }
+	inline static void SetPosProgressBar(int ProgressBar, int Pos) { SendMessage(Launcher::ProgressBar[ProgressBar], PBM_SETPOS, (WPARAM)Pos, 0); }
+	inline static void StartGameEnable(){ EnableWindow(Launcher::Button[2], true); }
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI OptionsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

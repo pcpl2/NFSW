@@ -4,13 +4,16 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
+Launcher *Launcher::instance = 0;
+
 HWND *Launcher::Window = new HWND[1];
 HWND *Launcher::Button = new HWND[8];
 HWND *Launcher::Edit = new HWND[1];
 HWND *Launcher::Text = new HWND[5];
 HWND *Launcher::Combo = new HWND[2];
+HWND *Launcher::ProgressBar = new HWND[2];
 
-int Launcher::region;
+bool Launcher::SevenOrNewer;
 int *Launcher::CheckBox = new int[5];
 
 char Login[128] = { 0 };
@@ -24,7 +27,6 @@ HKEY Launcher::hKey = 0;
 /*
 		Links
 		https://94.236.124.241/nfsw/Engine.svc/systeminfo
-		https://94.236.124.241/nfsw/Engine.svc/launcherinfo
 		http://world.needforspeed.com/SpeedAPI/ws/game/nfsw/server/status?locale=EU&shard=apex ???
 
 */
@@ -35,12 +37,36 @@ char *Launcher::TermsOfService = "http://cdn.world.needforspeed.com/static/world
 char Launcher::GameDir[MAX_PATH] = { 0 };
 char *Launcher::GameUrl = new char[256];
 
+Launcher::Launcher()
+{
+	instance = this;
+}
+
+Launcher::~Launcher()
+{
+	delete[] R;
+	delete[] Logged;
+	delete GameUrl;
+	DeleteObject(Window);
+	/*HWND * Launcher::Window = new HWND[1];
+	HWND * Launcher::Button = new HWND[4];
+	HWND * Launcher::Edit = new HWND[1];
+	HWND * Launcher::Text = new HWND[5];
+	HWND * Launcher::Combo = new HWND[0];*/
+}
+
 void Launcher::Initialize(HINSTANCE hInstance)
 {
 	HFONT hFont = CreateFont(15, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
 	char *LanguageText[] = { "English", "Germany", "Spanish", "French", "Polish", "Russian", "Portuguese", "Thai", "Turkish", "Chinese", "Chinese_Simplified" };
+
+	OSVERSIONINFO osvi;
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&osvi);
+	SevenOrNewer = ((osvi.dwMajorVersion >= 6) && (osvi.dwMinorVersion >= 1)) || (osvi.dwMajorVersion >= 7);
 
 	WNDCLASSEX wc;
 
@@ -88,6 +114,11 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	RegisterClassEx(&wc);
 
+	INITCOMMONCONTROLSEX icc;
+	icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icc.dwICC = ICC_BAR_CLASSES;
+	InitCommonControlsEx(&icc);
+
 	Window[0] = CreateWindowEx(WS_EX_CLIENTEDGE, "NFSWL_main", "Need For speed World Launcher c++", WS_SYSMENU | WS_MINIMIZEBOX,CW_USEDEFAULT, CW_USEDEFAULT, 800, 300, NULL, NULL, hInstance, NULL);
 	Button[0] = CreateWindowEx(NULL, WC_BUTTON, "Login", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button1, hInstance, NULL);
 	Button[1] = CreateWindowEx(NULL, WC_BUTTON, "Settings", WS_CHILD | WS_VISIBLE, 660, 20, 100, 30, Window[0], (HMENU)ID_Button2, hInstance, NULL);
@@ -101,6 +132,11 @@ void Launcher::Initialize(HINSTANCE hInstance)
 
 	Button[2] = CreateWindowEx(NULL, WC_BUTTON, "Start Game", WS_CHILD | WS_VISIBLE, 600, 200, 130, 30, Window[0], (HMENU)ID_Button3, hInstance, NULL);
 	ShowWindow(Button[2], SW_HIDE);
+	EnableWindow(Button[2], false);
+	ProgressBar[0] = CreateWindowEx(0, PROGRESS_CLASS, NULL, WS_CHILD | WS_VISIBLE, 20, 215, 500, 15, Window[0], NULL, hInstance, NULL);
+	ShowWindow(ProgressBar[0], SW_HIDE);
+	ProgressBar[1] = CreateWindowEx(0, PROGRESS_CLASS, NULL, WS_CHILD | WS_VISIBLE, 20, 170, 500, 15, Window[0], NULL, hInstance, NULL);
+	ShowWindow(ProgressBar[1], SW_HIDE);
 
 	wc.lpfnWndProc = OptionsProc;
 	wc.lpszClassName = "NFSWL_Options";
@@ -363,9 +399,21 @@ bool Launcher::GetGameDirFromRegistry()
 LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	Downloader D;
+	
+	if (SevenOrNewer)
+	{
+		ITaskbarList3 *ptl;
+		if (CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (LPVOID *)& ptl) == S_OK)
+		{
+			ptl->SetProgressState(hwnd, TBPF_NORMAL);
+			ptl->SetProgressValue(hwnd, SendMessage(ProgressBar[0], PBM_GETPOS, 0, 0), SendMessage(ProgressBar[0], PBM_GETRANGE, 0, 0));
+		}
+	}
 	switch (msg)
 	{
 	case WM_CREATE:
+		if (SevenOrNewer)
+			RegisterWindowMessage("TaskbarButtonCreated");
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
@@ -383,10 +431,9 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		{
 		case ID_Button1:
 			EnableWindow(Combo[0], false);
-			region = SendMessage(Combo[0], CB_GETCURSEL, 0, 0);
 			GetWindowText(Edit[0], Login, sizeof(Login));
 			GetWindowText(Edit[1], Password, sizeof(Password));
-			if (Launcher::SignIn(Login, Password, R[region].Url, R[region].Name))
+			if (Launcher::SignIn(Login, Password, R[SendMessage(Combo[0], CB_GETCURSEL, 0, 0)].Url, R[SendMessage(Combo[0], CB_GETCURSEL, 0, 0)].Name))
 			{
 				ShowWindow(Combo[0], SW_HIDE);
 				ShowWindow(Edit[0], SW_HIDE);
@@ -396,15 +443,17 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				ShowWindow(Button[0], SW_HIDE);
 				ShowWindow(Button[1], SW_HIDE);
 				ShowWindow(Button[2], SW_SHOW);
-	//			D.StartVerificationAndDownload(true, "en", GameUrl);
+				ShowWindow(ProgressBar[0], SW_SHOW);
+				ShowWindow(ProgressBar[1], SW_SHOW);
+				D.StartVerificationAndDownload(true, "en", GameUrl);
 			}
 			break;
 		case ID_Button2:
 			D.StartVerificationAndDownload(true, "en", GameUrl); //debug
-	//		ShowWindow(Window[1], SW_SHOW);
+			//		ShowWindow(Window[1], SW_SHOW);
 			break;
 		case ID_Button3:
-			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[region].Url, R[region].Name);
+			Launcher::StartGame(Logged[0].securityToken, Logged[0].userId, R[SendMessage(Combo[0], CB_GETCURSEL, 0, 0)].Url, R[SendMessage(Combo[0], CB_GETCURSEL, 0, 0)].Name);
 			DestroyWindow(hwnd);
 			break;
 		}
@@ -413,7 +462,7 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 
-	return 0;
+return 0;
 }
 
 LRESULT CALLBACK Launcher::OptionsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -442,17 +491,9 @@ LRESULT CALLBACK Launcher::OptionsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	return 0;
 }
 
-void Launcher::remove()
+Launcher& Launcher::Get()
 {
-	delete[] R;
-	delete[] Logged;
-	delete GameUrl;
-	DeleteObject(Window);
-	/*HWND * Launcher::Window = new HWND[1];
-HWND * Launcher::Button = new HWND[4];
-HWND * Launcher::Edit = new HWND[1];
-HWND * Launcher::Text = new HWND[5];
-HWND * Launcher::Combo = new HWND[0];*/
+	return *instance;
 }
 
 /*

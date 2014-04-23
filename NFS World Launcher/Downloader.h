@@ -11,12 +11,13 @@ struct FileInfo
 {
 	char *Path;
 	char *File;
+	char *Package;
 	int Section;
 	int ToSection;
 	int Offset;
 	int Lenght;
 	int Compressed;
-	bool LanguagePackage;
+	bool SetPackage;
 };
 
 struct DownloadThread
@@ -24,7 +25,6 @@ struct DownloadThread
 	short i;
 	FileInfo **FI;
 	char *Path;
-	char *Package;
 	char *Url;
 };
 
@@ -33,11 +33,13 @@ class Downloader
 protected:
 	HANDLE ThreadV;
 private:
-	static Downloader instance;
+	static Downloader *instance;
 
 public:
 	Downloader();
 	~Downloader();
+
+	static Downloader& Get();
 
 	void StartVerificationAndDownload(bool FullD, char *Package, char *ServerPath);
 
