@@ -34,6 +34,15 @@
     <Filter Include="lib\HTTP">
       <UniqueIdentifier>{038ae13b-3df2-4861-9b6e-a4237d71e222}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib\md5">
+      <UniqueIdentifier>{8a68fe85-9a2c-4afc-b06b-0881afa1c423}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\base64">
+      <UniqueIdentifier>{b7fcd2d9-6338-41eb-9143-e9d574ccc437}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\hex">
+      <UniqueIdentifier>{84acc378-ba73-40c0-970d-5e336742eb2e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils.cpp">
@@ -59,6 +68,15 @@
     </ClCompile>
     <ClCompile Include="Autoupdate.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\md5\md5.cpp">
+      <Filter>lib\md5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\base64\base64.cpp">
+      <Filter>lib\base64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\hex\hex.cpp">
+      <Filter>lib\hex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +133,15 @@
     </ClInclude>
     <ClInclude Include="Autoupdate.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\md5\md5.h">
+      <Filter>lib\md5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\base64\base64.h">
+      <Filter>lib\base64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\hex\hex.h">
+      <Filter>lib\hex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

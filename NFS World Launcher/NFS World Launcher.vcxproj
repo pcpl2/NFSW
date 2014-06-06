@@ -44,7 +44,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\cryptopp562;..\libs\lzma920\C</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\lzma920\C;..\libs\md5\;..\libs\base64\;..\libs\hex\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -83,8 +83,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\base64\base64.cpp" />
+    <ClCompile Include="..\libs\hex\hex.cpp" />
     <ClCompile Include="..\libs\HTTP\HTTP.cpp" />
     <ClCompile Include="..\libs\logger\Logger.cpp" />
+    <ClCompile Include="..\libs\md5\md5.cpp" />
     <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp" />
     <ClCompile Include="Autoupdate.cpp" />
     <ClCompile Include="Downloader.cpp" />
@@ -93,6 +96,7 @@
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\base64\base64.h" />
     <ClInclude Include="..\libs\curl\include\curl\curl.h" />
     <ClInclude Include="..\libs\curl\include\curl\curlbuild.h" />
     <ClInclude Include="..\libs\curl\include\curl\curlrules.h" />
@@ -102,8 +106,10 @@
     <ClInclude Include="..\libs\curl\include\curl\multi.h" />
     <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h" />
     <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h" />
+    <ClInclude Include="..\libs\hex\hex.h" />
     <ClInclude Include="..\libs\HTTP\HTTP.h" />
     <ClInclude Include="..\libs\logger\Logger.h" />
+    <ClInclude Include="..\libs\md5\md5.h" />
     <ClInclude Include="..\libs\tinyxml\tinyxml2.h" />
     <ClInclude Include="Autoupdate.h" />
     <ClInclude Include="Downloader.h" />

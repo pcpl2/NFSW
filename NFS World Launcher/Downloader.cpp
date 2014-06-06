@@ -230,8 +230,6 @@ void Downloader::Download(DownloadThread *DT)
 void Downloader::Verify(VerifyArgument *param)
 {
 	//en ; de ; es ; fr ; ru ; 
-	USING_NAMESPACE(CryptoPP)
-	USING_NAMESPACE(Weak1)
 
 //	Launcher::Get().SetMarqueeProgressBar(1, true);
 
@@ -275,15 +273,18 @@ void Downloader::Verify(VerifyArgument *param)
 	
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		char *path3 = 0;
+		Utils::Timer t;
+		t.start();
+		char *path3 = new char;
 		char path4[MAX_PATH] = { 0 };
 		char *innerText = new char[MAX_PATH];
 		char *File = new char[MAX_PATH];
 		char *str = new char[10];
-		char *Hash = 0;
-		char *HashSvr = 0;
-		MD5 md5;
-		std::string HashOutput;
+		char *Hash = new char[24];
+		char *Hash1 = new char;
+		char *Hash2 = new char;
+		char *Hash3 = new char;
+		char *HashSvr = new char;
 
 		if (tos)
 		{
@@ -303,10 +304,12 @@ void Downloader::Verify(VerifyArgument *param)
 
 		if(Utils::FileExists(File))
 		{
-			FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
-			Hash = const_cast<char*>(HashOutput.c_str());
-			Hash[strlen(Hash) - 1] = '\0';
+			Hash1 = MD5File(File);
+			std::string result_string = HEX2STR(Hash1);
+
+			std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
 			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+			Hash = const_cast<char*>(thash.c_str());
 
 			if (strcmp(Hash, HashSvr) != 0)
 			{
@@ -392,6 +395,9 @@ void Downloader::Verify(VerifyArgument *param)
 		delete[] innerText;
 		delete[] File;
 		delete[] str;
+		t.stop();
+		DWORD t1 = t.elapsed();
+		Info("%dms", t1);
 	}
 
 	tos = false;
@@ -420,15 +426,16 @@ void Downloader::Verify(VerifyArgument *param)
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		char *path3 = 0;
+		char *path3 = new char;
 		char path4[MAX_PATH] = { 0 };
 		char *innerText = new char[MAX_PATH];
 		char *File = new char[MAX_PATH];
 		char *str = new char[10];
-		char *Hash = 0;
-		char *HashSvr = 0;
-		MD5 md5;
-		std::string HashOutput;
+		char *Hash = new char[24];
+		char *Hash1 = new char;
+		char *Hash2 = new char;
+		char *Hash3 = new char;
+		char *HashSvr = new char;
 
 		if (tos)
 		{
@@ -448,10 +455,12 @@ void Downloader::Verify(VerifyArgument *param)
 
 		if (Utils::FileExists(File))
 		{
-			FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
-			Hash = const_cast<char*>(HashOutput.c_str());
-			Hash[strlen(Hash) - 1] = '\0';
+			Hash1 = MD5File(File);
+			std::string result_string = HEX2STR(Hash1);
+
+			std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
 			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+			Hash = const_cast<char*>(thash.c_str());
 
 			if (strcmp(Hash, HashSvr) != 0)
 			{
@@ -575,15 +584,16 @@ void Downloader::Verify(VerifyArgument *param)
 
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
-		char *path3 = 0;
+		char *path3 = new char;
 		char path4[MAX_PATH] = { 0 };
 		char *innerText = new char[MAX_PATH];
 		char *File = new char[MAX_PATH];
 		char *str = new char[10];
-		char *Hash = 0;
-		char *HashSvr = 0;
-		MD5 md5;
-		std::string HashOutput;
+		char *Hash = new char[24];
+		char *Hash1 = new char;
+		char *Hash2 = new char;
+		char *Hash3 = new char;
+		char *HashSvr = new char;
 
 		if (tos)
 		{
@@ -603,10 +613,12 @@ void Downloader::Verify(VerifyArgument *param)
 
 		if (Utils::FileExists(File))
 		{
-			FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
-			Hash = const_cast<char*>(HashOutput.c_str());
-			Hash[strlen(Hash) - 1] = '\0';
+			Hash1 = MD5File(File);
+			std::string result_string = HEX2STR(Hash1);
+
+			std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
 			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+			Hash = const_cast<char*>(thash.c_str());
 
 			if (strcmp(Hash, HashSvr) != 0)
 			{
@@ -731,15 +743,16 @@ void Downloader::Verify(VerifyArgument *param)
 
 		for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 		{
-			char *path3 = 0;
+			char *path3 = new char;
 			char path4[MAX_PATH] = { 0 };
 			char *innerText = new char[MAX_PATH];
 			char *File = new char[MAX_PATH];
 			char *str = new char[10];
-			char *Hash = 0;
-			char *HashSvr = 0;
-			MD5 md5;
-			std::string HashOutput;
+			char *Hash = new char[24];
+			char *Hash1 = new char;
+			char *Hash2 = new char;
+			char *Hash3 = new char;
+			char *HashSvr = new char;
 
 			if (tos)
 			{
@@ -759,10 +772,12 @@ void Downloader::Verify(VerifyArgument *param)
 
 			if (Utils::FileExists(File))
 			{
-				FileSource f(File, true, new HashFilter(md5, new Base64Encoder(new StringSink(HashOutput))));
-				Hash = const_cast<char*>(HashOutput.c_str());
-				Hash[strlen(Hash) - 1] = '\0';
+				Hash1 = MD5File(File);
+				std::string result_string = HEX2STR(Hash1);
+
+				std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
 				HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
+				Hash = const_cast<char*>(thash.c_str());
 
 				if (strcmp(Hash, HashSvr) != 0)
 				{
