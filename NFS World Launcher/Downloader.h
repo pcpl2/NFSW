@@ -20,10 +20,18 @@ struct FileInfo
 	bool SetPackage;
 };
 
+struct VerifyP
+{
+	char *ServerUrl;
+	bool SetPackage;
+	char *Package;
+	char *PackageDir;
+	short PackageSize;
+	short Thread;
+};
+
 struct DownloadThread
 {
-	short i;
-	FileInfo **FI;
 	char *Path;
 	char *Url;
 };
@@ -34,7 +42,9 @@ protected:
 	HANDLE ThreadV;
 private:
 	static Downloader *instance;
-
+	static FileInfo **FI;
+	static short FI_I;
+	HANDLE Mutex;
 public:
 	Downloader();
 	~Downloader();
@@ -45,10 +55,13 @@ public:
 
 	static void Download(DownloadThread *DT);
 	static void Verify(VerifyArgument *param);
+	static void VerifyProcess(VerifyP *VP);
+
+	static short AddFileToFI(char *Path, char *File, int Section, int Offset, int Lenght, int Compressed, bool SetPackage, short PackageSize, char *Package, int ToSection);
+	static void ChangeToSectionInFI(short i, int ToSection);
+
+	void LockMutex();
+	void UnlockMutex();
 
 	char * GetIndexFile(char *url);
 };
-
-
-
-

@@ -1,15 +1,22 @@
 #include <includes.h>
 
 Downloader *Downloader::instance = 0;
+FileInfo **Downloader::FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
+short Downloader::FI_I = 0;
 
 Downloader::Downloader()
 {
 	instance = this;
+	Mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
 Downloader::~Downloader()
 {
-
+	if (Mutex)
+	{
+		CloseHandle(Mutex);
+		Mutex = 0;
+	}
 
 }
 
@@ -33,7 +40,6 @@ void ClearTmp()
 
 void Downloader::Download(DownloadThread *DT)
 {
-	short i = DT->i;
 	char *DefaultTempPath = new char[MAX_PATH];
 	char *TempPath = new char[MAX_PATH];
 
@@ -46,11 +52,11 @@ void Downloader::Download(DownloadThread *DT)
 		CreateDirectory(TempPath, NULL);
 
 	//Launcher::Get().SetMarqueeProgressBar(1, false);
-	Launcher::Get().SetRangeProgressBar(1, 0, i);
+	Launcher::Get().SetRangeProgressBar(1, 0, FI_I);
 
 	Launcher::Get().SetPosProgressBar(0, 60);
 
-	for (short s = 0; s < i; s++)
+	for (short s = 0; s < FI_I; s++)
 	{
 		Launcher::Get().SetPosProgressBar(1, s + 1);
 		CURL *curl;
@@ -63,27 +69,27 @@ void Downloader::Download(DownloadThread *DT)
 		char *Url = new char[256];
 		size_t result;
 
-		if (DT->FI[s]->SetPackage)
-			sprintf(TempPathFile, "%s%s\\", TempPath, DT->FI[s]->Package);
+		if (FI[s]->SetPackage)
+			sprintf(TempPathFile, "%s%s\\", TempPath, FI[s]->Package);
 		else
 			sprintf(TempPathFile, "%s\\", TempPath);
 
 		if (!Utils::FileExists(TempPathFile))
 			CreateDirectory(TempPathFile, NULL);
-		if (DT->FI[s]->SetPackage)
+		if (FI[s]->SetPackage)
 			Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : %s\n",
-				DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed, DT->FI[s]->Package);
+				FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed, FI[s]->Package);
 		else
 			Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : \n",
-				DT->FI[s]->Path, DT->FI[s]->File, DT->FI[s]->Section, DT->FI[s]->ToSection, DT->FI[s]->Offset, DT->FI[s]->Lenght, DT->FI[s]->Compressed);
+				FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
 
-		for (int val2 = DT->FI[s]->Section; val2 <= DT->FI[s]->ToSection; ++val2)
+		for (int val2 = FI[s]->Section; val2 <= FI[s]->ToSection; ++val2)
 		{
 			sprintf(DatFile, "section%d.dat", val2);
 			Debug("%s", DatFile);
 
-			if (DT->FI[s]->SetPackage)
-				sprintf(Url, "%s/%s/%s", DT->Url, DT->FI[s]->Package, DatFile);
+			if (FI[s]->SetPackage)
+				sprintf(Url, "%s/%s/%s", DT->Url, FI[s]->Package, DatFile);
 			else
 				sprintf(Url, "%s/%s", DT->Url, DatFile);
 
@@ -117,21 +123,21 @@ void Downloader::Download(DownloadThread *DT)
 
 		}
 
-		if (strcmp(DT->FI[s]->Path, "") != 0)
-			sprintf(File, "%s\\%s\\%s", DT->Path, DT->FI[s]->Path, DT->FI[s]->File);
+		if (strcmp(FI[s]->Path, "") != 0)
+			sprintf(File, "%s\\%s\\%s", DT->Path, FI[s]->Path, FI[s]->File);
 		else
-			sprintf(File, "%s\\%s", DT->Path, DT->FI[s]->File);
+			sprintf(File, "%s\\%s", DT->Path, FI[s]->File);
 
 		char *Directory = new char[MAX_PATH];
-		sprintf(Directory, "%s\\%s", DT->Path, DT->FI[s]->Path);
+		sprintf(Directory, "%s\\%s", DT->Path, FI[s]->Path);
 
 		if (!Utils::FileExists(Directory))
 			CreateDirectory(Directory, NULL);
 
 		delete Directory;
 
-		SizeT srcLen = DT->FI[s]->Compressed - 13;
-		SizeT destLen = DT->FI[s]->Lenght;
+		SizeT srcLen = FI[s]->Compressed - 13;
+		SizeT destLen = FI[s]->Lenght;
 
 		unsigned char Prop[5];
 		unsigned char Arr[13];
@@ -139,7 +145,7 @@ void Downloader::Download(DownloadThread *DT)
 		std::vector<unsigned char> inBuf2;
 		//unsigned char *LZMA;
 
-		for (int x = DT->FI[s]->Section; x <= DT->FI[s]->ToSection; x++)
+		for (int x = FI[s]->Section; x <= FI[s]->ToSection; x++)
 		{
 			sprintf(DatFile, "section%d.dat", x);
 			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
@@ -179,16 +185,16 @@ void Downloader::Download(DownloadThread *DT)
 		delete DatFile;
 
 		for (int index = 0; index < 13; index++)
-			Arr[index] = inBuf1.at(DT->FI[s]->Offset + index);
+			Arr[index] = inBuf1.at(FI[s]->Offset + index);
 
 		/*
-		memcpy(&Arr, LZMA + DT->FI[s]->Offset, 13);
-		unsigned char *LZMA2 = new unsigned char[DT->FI[s]->Offset + DT->FI[s]->Compressed + 1];*/
-		for (int index = DT->FI[s]->Offset + 13; index < DT->FI[s]->Offset + DT->FI[s]->Compressed; index++)
+		memcpy(&Arr, LZMA + FI[s]->Offset, 13);
+		unsigned char *LZMA2 = new unsigned char[FI[s]->Offset + FI[s]->Compressed + 1];*/
+		for (int index = FI[s]->Offset + 13; index < FI[s]->Offset + FI[s]->Compressed; index++)
 			inBuf2.push_back(inBuf1.at(index));
 
 		inBuf1.clear();
-		//memcpy(&LZMA2, LZMA + DT->FI[s]->Offset + 13, DT->FI[s]->Offset + DT->FI[s]->Compressed);
+		//memcpy(&LZMA2, LZMA + FI[s]->Offset + 13, FI[s]->Offset + FI[s]->Compressed);
 
 		memcpy(Prop, Arr, 5);
 
@@ -220,33 +226,25 @@ void Downloader::Download(DownloadThread *DT)
 	delete TempPath;
 	free(DT->Url);
 	free(DT->Path);
-	free(DT->FI);
 	delete DT;
 	Launcher::Get().SetPosProgressBar(0, 70);
 	Launcher::Get().StartGameEnable();
 	ExitThread(0);
 }
 
-void Downloader::Verify(VerifyArgument *param)
+void Downloader::VerifyProcess(VerifyP *VP)
 {
-	//en ; de ; es ; fr ; ru ; 
-
-//	Launcher::Get().SetMarqueeProgressBar(1, true);
-
-	char *languagePackage = new char[3];
 	char *path = new char[MAX_PATH];
 	char *path1 = new char[MAX_PATH];
 	char FilePath[128];
 	char ServerPath[128];
-	bool FullDownload = param->FullDownload;
 	bool tos = false;
-	short i = 0;
-	FileInfo **FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
+	short tos_s = 0;
 
-	sprintf(ServerPath, "%s/", param->ServerPath);
-
-	if (sizeof(param->Package) > NULL)
-		memcpy(languagePackage, param->Package, 3);
+	if (VP->SetPackage)
+		sprintf(ServerPath, "%s/%s/", VP->ServerUrl, VP->Package);
+	else
+		sprintf(ServerPath, "%s/", VP->ServerUrl);
 
 	sprintf(FilePath, "%sindex.xml", ServerPath);
 	char *IndexCharFile = Downloader::Get().GetIndexFile(FilePath);
@@ -261,16 +259,16 @@ void Downloader::Verify(VerifyArgument *param)
 	sprintf(path, "%s\\Data", Launcher::GetGameDir());
 	memcpy(path1, path, MAX_PATH);
 
-	if (sizeof(languagePackage) > NULL)
-		sprintf(path1, "%s\\%s", path, languagePackage);
+	if (VP->SetPackage)
+		sprintf(path1, "%s\\%s", path, VP->PackageDir);
 
 	if (!Utils::FileExists(path1))
 		CreateDirectory(path1, NULL);
 
 	tinyxml2::XMLElement *ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
-	
+
 	Launcher::Get().SetPosProgressBar(0, 10);
-	
+
 	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
 	{
 		Utils::Timer t;
@@ -281,14 +279,12 @@ void Downloader::Verify(VerifyArgument *param)
 		char *File = new char[MAX_PATH];
 		char *str = new char[10];
 		char *Hash = new char[24];
-		char *Hash1 = new char;
-		char *Hash2 = new char;
-		char *Hash3 = new char;
-		char *HashSvr = new char;
+		char *Hash1 = { 0 };
+		char *HashSvr = { 0 };
 
 		if (tos)
 		{
-			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
+			ChangeToSectionInFI(tos_s, atoi(ShardInfo->FirstChildElement("section")->GetText()));
 			tos = false;
 		}
 
@@ -302,7 +298,7 @@ void Downloader::Verify(VerifyArgument *param)
 		else
 			sprintf(File, "%s\\%s", path, innerText);
 
-		if(Utils::FileExists(File))
+		if (Utils::FileExists(File))
 		{
 			Hash1 = MD5File(File);
 			std::string result_string = HEX2STR(Hash1);
@@ -313,573 +309,122 @@ void Downloader::Verify(VerifyArgument *param)
 
 			if (strcmp(Hash, HashSvr) != 0)
 			{
-				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-				i++;
-				if (!FI)
-				{	
-					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->Path, 0, MAX_PATH);
-					strcpy(FI[0]->Path, path4);
-					FI[0]->File = (char *)malloc(MAX_PATH);
-					memset(FI[0]->File, 0, MAX_PATH);
-					strcpy(FI[0]->File, innerText);
-					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[0]->SetPackage = false;
-					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-				else
-				{
-					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->Path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->Path, path4);
-					FI[i - 1]->File = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->File, 0, MAX_PATH);
-					strcpy(FI[i - 1]->File, innerText);
-					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[i - 1]->SetPackage = false;
-					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
+				Debug("(thread %d) FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", VP->Thread, innerText, Hash, HashSvr);
+				tos_s = AddFileToFI(path4, innerText, atoi(ShardInfo->FirstChildElement("section")->GetText()),
+					atoi(ShardInfo->FirstChildElement("offset")->GetText()),
+					atoi(ShardInfo->FirstChildElement("length")->GetText()),
+					atoi(ShardInfo->FirstChildElement("compressed")->GetText()),
+					VP->SetPackage, VP->PackageSize, VP->Package,
+					atoi(ShardInfo->FirstChildElement("section")->GetText()));
+				tos = true;
 			}
 			else
-				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
+			{
+				Debug("(thread %d) FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", VP->Thread, innerText, Hash, HashSvr);
+			}
 		}
 		else
 		{
-			i++;
-			Debug("FILE : %s not found", innerText);
-			if (!FI)
-			{
-				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->Path, 0, MAX_PATH);
-				strcpy(FI[0]->Path, path4);
-				FI[0]->File = (char *)malloc(MAX_PATH);
-				memset(FI[0]->File, 0, MAX_PATH);
-				strcpy(FI[0]->File, innerText);
-				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[0]->SetPackage = false;
-				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
-			else
-			{
-				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->Path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->Path, path4);
-				FI[i - 1]->File = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->File, 0, MAX_PATH);
-				strcpy(FI[i - 1]->File, innerText);
-				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[i - 1]->SetPackage = false;
-				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
+			Debug("(thread %d) FILE : %s not found", VP->Thread, innerText);
+			tos_s = AddFileToFI(path4, innerText, atoi(ShardInfo->FirstChildElement("section")->GetText()),
+				atoi(ShardInfo->FirstChildElement("offset")->GetText()),
+				atoi(ShardInfo->FirstChildElement("length")->GetText()),
+				atoi(ShardInfo->FirstChildElement("compressed")->GetText()),
+				VP->SetPackage, VP->PackageSize, VP->Package,
+				atoi(ShardInfo->FirstChildElement("section")->GetText()));
+			tos = true;
 		}
 		delete[] innerText;
 		delete[] File;
-		delete[] str;
+		delete str;
 		t.stop();
-		DWORD t1 = t.elapsed();
-		Info("%dms", t1);
+		Info("(thread %d) %dms", VP->Thread, t.elapsed());
 	}
+	ExitThread(0);
+}
 
-	tos = false;
+void Downloader::Verify(VerifyArgument *param)
+{
+	//en ; de ; es ; fr ; ru ; 
+	Utils::Timer t;
+//	Launcher::Get().SetMarqueeProgressBar(1, true);
+	HANDLE *ThreadVP = new HANDLE[3];
 
-	if (sizeof(languagePackage) > NULL)
-		sprintf(ServerPath, "%s/%s", param->ServerPath, languagePackage);
+	VerifyP *VP1 = new VerifyP;
+	VerifyP *VP2 = new VerifyP;
+	VerifyP *VP3 = new VerifyP;
+	VerifyP *VP4 = new VerifyP;
+	t.start();
 
-	sprintf(FilePath, "%s/index.xml", ServerPath);
-	IndexCharFile = Downloader::Get().GetIndexFile(FilePath);
+	VP1->ServerUrl = new char[128];
+	memcpy(VP1->ServerUrl, param->ServerPath, 128);
+	VP1->SetPackage = false;
+	VP1->Thread = 1;
 
-	if (sizeof(IndexCharFile) < NULL)
-		Error("Error retrieving the index.xml file");
+	ThreadVP[0] = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)VerifyProcess, VP1, 0, 0);
+	
+	Sleep(500);
 
-	indexFile.Parse(IndexCharFile);
-	free(IndexCharFile);
+	Launcher::Get().SetPosProgressBar(0, 10);
+		
+	VP2->ServerUrl = new char[128];
+	memcpy(VP2->ServerUrl, param->ServerPath, 128);
+	VP2->SetPackage = true;
+	VP2->PackageSize = 3;
+	VP2->Package = new char[VP2->PackageSize];
+	memcpy(VP2->Package, param->Package, VP2->PackageSize);
+	VP2->PackageDir = new char[MAX_PATH];
+	strcpy(VP2->PackageDir, "Sound\\Speech\\");
+	VP2->Thread = 2;
 
-	if (sizeof(languagePackage) > NULL)
-		sprintf(path1, "%s\\Sound\\Speech", path);
+	ThreadVP[1] = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)VerifyProcess, VP2, 0, 0);
 
-	if (!Utils::FileExists(path1))
-		CreateDirectory(path1, NULL);
-
-	ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+	Sleep(500);
 
 	Launcher::Get().SetPosProgressBar(0, 20);
 
-	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
-	{
-		char *path3 = new char;
-		char path4[MAX_PATH] = { 0 };
-		char *innerText = new char[MAX_PATH];
-		char *File = new char[MAX_PATH];
-		char *str = new char[10];
-		char *Hash = new char[24];
-		char *Hash1 = new char;
-		char *Hash2 = new char;
-		char *Hash3 = new char;
-		char *HashSvr = new char;
+	VP3->ServerUrl = new char[128];
+	memcpy(VP3->ServerUrl, param->ServerPath, 128);
+	VP3->SetPackage = true;
+	VP3->PackageSize = 7;
+	VP3->Package = new char[VP3->PackageSize];
+	strcpy(VP3->Package, "Tracks");
+	VP3->PackageDir = new char[MAX_PATH];
+	strcpy(VP3->PackageDir, "Tracks\\");
+	VP3->Thread = 3;
 
-		if (tos)
-		{
-			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-			tos = false;
-		}
+	ThreadVP[2] = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)VerifyProcess, VP3, 0, 0);
 
-		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
-		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
-
-		sscanf(path3, "%8s %s", str, path4);
-
-		if (strcmp(path4, "") != 0)
-			sprintf(File, "%s\\%s\\%s", path, path4, innerText);
-		else
-			sprintf(File, "%s\\%s", path, innerText);
-
-		if (Utils::FileExists(File))
-		{
-			Hash1 = MD5File(File);
-			std::string result_string = HEX2STR(Hash1);
-
-			std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
-			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
-			Hash = const_cast<char*>(thash.c_str());
-
-			if (strcmp(Hash, HashSvr) != 0)
-			{
-				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-				i++;
-				if (!FI)
-				{
-					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->Path, 0, MAX_PATH);
-					strcpy(FI[0]->Path, path4);
-					FI[0]->File = (char *)malloc(MAX_PATH);
-					memset(FI[0]->File, 0, MAX_PATH);
-					strcpy(FI[0]->File, innerText);
-					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[0]->SetPackage = true;
-					FI[0]->Package = (char *)malloc(3);
-					memset(FI[0]->Package, 0, 3);
-					strcpy(FI[0]->Package, languagePackage);
-					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-				else
-				{
-					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->Path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->Path, path4);
-					FI[i - 1]->File = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->File, 0, MAX_PATH);
-					strcpy(FI[i - 1]->File, innerText);
-					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[i - 1]->SetPackage = true;
-					FI[i - 1]->Package = (char *)malloc(3);
-					memset(FI[i - 1]->Package, 0, 3);
-					strcpy(FI[i - 1]->Package, languagePackage);
-					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-			}
-			else
-				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-		}
-		else
-		{
-			i++;
-			Debug("FILE : %s not found", innerText);
-			if (!FI)
-			{
-				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->Path, 0, MAX_PATH);
-				strcpy(FI[0]->Path, path4);
-				FI[0]->File = (char *)malloc(MAX_PATH);
-				memset(FI[0]->File, 0, MAX_PATH);
-				strcpy(FI[0]->File, innerText);
-				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[0]->SetPackage = true;
-				FI[0]->Package = (char *)malloc(3);
-				memset(FI[0]->Package, 0, 3);
-				strcpy(FI[0]->Package, languagePackage);
-				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
-			else
-			{
-				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->Path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->Path, path4);
-				FI[i - 1]->File = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->File, 0, MAX_PATH);
-				strcpy(FI[i - 1]->File, innerText);
-				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[i - 1]->SetPackage = true;
-				FI[i - 1]->Package = (char *)malloc(3);
-				memset(FI[i - 1]->Package, 0, 3);
-				strcpy(FI[i - 1]->Package, languagePackage);
-				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
-		}
-
-		delete[] innerText;
-		delete[] File;
-		delete[] str;
-	}
-	
-	tos = false;
-	
-	sprintf(ServerPath, "%s/Tracks", param->ServerPath);
-	sprintf(FilePath, "%s/index.xml", ServerPath);
-	IndexCharFile = Downloader::Get().GetIndexFile(FilePath);
-
-	if (sizeof(IndexCharFile) < NULL)
-		Error("Error retrieving the index.xml file");
-
-	indexFile.Parse(IndexCharFile);
-	free(IndexCharFile);
-
-	sprintf(path1, "%s\\Tracks\\", path);
-
-	if (!Utils::FileExists(path1))
-		CreateDirectory(path1, NULL);
-
-	ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+	Sleep(500);
 
 	Launcher::Get().SetPosProgressBar(0, 30);
 
-	for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
+	if (param->FullDownload)
 	{
-		char *path3 = new char;
-		char path4[MAX_PATH] = { 0 };
-		char *innerText = new char[MAX_PATH];
-		char *File = new char[MAX_PATH];
-		char *str = new char[10];
-		char *Hash = new char[24];
-		char *Hash1 = new char;
-		char *Hash2 = new char;
-		char *Hash3 = new char;
-		char *HashSvr = new char;
+		VP4->ServerUrl = new char[128];
+		memcpy(VP4->ServerUrl, param->ServerPath, 128);
+		VP4->SetPackage = true;
+		VP4->PackageSize = 11;
+		VP4->Package = new char[VP4->PackageSize];
+		strcpy(VP4->Package, "TracksHigh");
+		VP4->PackageDir = new char[MAX_PATH];
+		strcpy(VP4->PackageDir, "TracksHigh\\");
+		VP4->Thread = 4;
 
-		if (tos)
-		{
-			FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-			tos = false;
-		}
+		ThreadVP[3] = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)VerifyProcess, VP4, 0, 0);
 
-		path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
-		sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
-
-		sscanf(path3, "%8s %s", str, path4);
-
-		if (strcmp(path4, "") != 0)
-			sprintf(File, "%s\\%s\\%s", path, path4, innerText);
-		else
-			sprintf(File, "%s\\%s", path, innerText);
-
-		if (Utils::FileExists(File))
-		{
-			Hash1 = MD5File(File);
-			std::string result_string = HEX2STR(Hash1);
-
-			std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
-			HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
-			Hash = const_cast<char*>(thash.c_str());
-
-			if (strcmp(Hash, HashSvr) != 0)
-			{
-				Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-				i++;
-				if (!FI)
-				{
-					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->Path, 0, MAX_PATH);
-					strcpy(FI[0]->Path, path4);
-					FI[0]->File = (char *)malloc(MAX_PATH);
-					memset(FI[0]->File, 0, MAX_PATH);
-					strcpy(FI[0]->File, innerText);
-					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[0]->SetPackage = true;
-					FI[0]->Package = (char *)malloc(7);
-					memset(FI[0]->Package, 0, 7);
-					sprintf(FI[0]->Package, "Tracks");
-					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-				else
-				{
-					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->Path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->Path, path4);
-					FI[i - 1]->File = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->File, 0, MAX_PATH);
-					strcpy(FI[i - 1]->File, innerText);
-					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[i - 1]->SetPackage = true;
-					FI[i - 1]->Package = (char *)malloc(7);
-					memset(FI[i - 1]->Package, 0, 7);
-					sprintf(FI[i - 1]->Package, "Tracks");
-					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-			}
-			else
-				Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-		}
-		else
-		{
-			i++;
-			Debug("FILE : %s not found", innerText);
-			if (!FI)
-			{
-				FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[0]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[0]->Path, 0, MAX_PATH);
-				strcpy(FI[0]->Path, path4);
-				FI[0]->File = (char *)malloc(MAX_PATH);
-				memset(FI[0]->File, 0, MAX_PATH);
-				strcpy(FI[0]->File, innerText);
-				FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[0]->SetPackage = true;
-				FI[0]->Package = (char *)malloc(7);
-				memset(FI[0]->Package, 0, 7);
-				sprintf(FI[0]->Package, "Tracks");
-				FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
-			else
-			{
-				FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-				FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->Path, 0, MAX_PATH);
-				strcpy(FI[i - 1]->Path, path4);
-				FI[i - 1]->File = (char *)malloc(MAX_PATH);
-				memset(FI[i - 1]->File, 0, MAX_PATH);
-				strcpy(FI[i - 1]->File, innerText);
-				FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-				FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-				FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-				FI[i - 1]->SetPackage = true;
-				FI[i - 1]->Package = (char *)malloc(7);
-				memset(FI[i - 1]->Package, 0, 7);
-				sprintf(FI[i - 1]->Package, "Tracks");
-				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = true;
-			}
-		}
-		delete[] innerText;
-		delete[] File;
-		delete[] str;
-	}
-
-	tos = false;
-
-	if (FullDownload)
-	{
-		sprintf(ServerPath, "%s/TracksHigh", param->ServerPath);
-		sprintf(FilePath, "%s/index.xml", ServerPath);
-		IndexCharFile = Downloader::Get().GetIndexFile(FilePath);
-
-		if (sizeof(IndexCharFile) < NULL)
-			Error("Error retrieving the index.xml file");
-
-		indexFile.Parse(IndexCharFile);
-		free(IndexCharFile);
-
-		sprintf(path1, "%s\\TracksHigh\\", path);
-
-		if (!Utils::FileExists(path1))
-			CreateDirectory(path1, NULL);
-
-		ShardInfo = indexFile.FirstChildElement("index")->FirstChildElement("fileinfo");
+		Sleep(500);
 
 		Launcher::Get().SetPosProgressBar(0, 40);
 
-		for (ShardInfo; ShardInfo; ShardInfo = ShardInfo->NextSiblingElement())
-		{
-			char *path3 = new char;
-			char path4[MAX_PATH] = { 0 };
-			char *innerText = new char[MAX_PATH];
-			char *File = new char[MAX_PATH];
-			char *str = new char[10];
-			char *Hash = new char[24];
-			char *Hash1 = new char;
-			char *Hash2 = new char;
-			char *Hash3 = new char;
-			char *HashSvr = new char;
+		WaitForSingleObject(ThreadVP[3], INFINITE);
 
-			if (tos)
-			{
-				FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-				tos = false;
-			}
-
-			path3 = const_cast<char*>(ShardInfo->FirstChildElement("path")->GetText());
-			sprintf(innerText, ShardInfo->FirstChildElement("file")->GetText());
-
-			sscanf(path3, "%8s %s", str, path4);
-
-			if (strcmp(path4, "") != 0)
-				sprintf(File, "%s\\%s\\%s", path, path4, innerText);
-			else
-				sprintf(File, "%s\\%s", path, innerText);
-
-			if (Utils::FileExists(File))
-			{
-				Hash1 = MD5File(File);
-				std::string result_string = HEX2STR(Hash1);
-
-				std::string thash = base64_encode(reinterpret_cast<const unsigned char*>(result_string.c_str()), result_string.length());
-				HashSvr = const_cast<char*>(ShardInfo->FirstChildElement("hash")->GetText());
-				Hash = const_cast<char*>(thash.c_str());
-
-				if (strcmp(Hash, HashSvr) != 0)
-				{
-					Debug("FILE : %s Hash is not the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-					i++;
-					if (!FI)
-					{
-						FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-						FI[0]->Path = (char *)malloc(MAX_PATH);
-						memset(FI[0]->Path, 0, MAX_PATH);
-						strcpy(FI[0]->Path, path4);
-						FI[0]->File = (char *)malloc(MAX_PATH);
-						memset(FI[0]->File, 0, MAX_PATH);
-						strcpy(FI[0]->File, innerText);
-						FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-						FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-						FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-						FI[0]->SetPackage = true;
-						FI[0]->SetPackage = true;
-						FI[0]->Package = (char *)malloc(11);
-						memset(FI[0]->Package, 0, 11);
-						sprintf(FI[0]->Package, "TracksHigh");
-						FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						tos = true;
-					}
-					else
-					{
-						FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-						FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-						memset(FI[i - 1]->Path, 0, MAX_PATH);
-						strcpy(FI[i - 1]->Path, path4);
-						FI[i - 1]->File = (char *)malloc(MAX_PATH);
-						memset(FI[i - 1]->File, 0, MAX_PATH);
-						strcpy(FI[i - 1]->File, innerText);
-						FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-						FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-						FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-						FI[i - 1]->SetPackage = true;
-						FI[i - 1]->Package = (char *)malloc(11);
-						memset(FI[i - 1]->Package, 0, 11);
-						sprintf(FI[i - 1]->Package, "TracksHigh");
-						FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-						tos = true;
-					}
-				}
-				else
-					Debug("FILE : %s Hash is the same\nHash: %s\nHashSvr: %s", innerText, Hash, HashSvr);
-			}
-			else
-			{
-				i++;
-				Debug("FILE : %s not found", innerText);
-				if (!FI)
-				{
-					FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[0]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[0]->Path, 0, MAX_PATH);
-					strcpy(FI[0]->Path, path4);
-					FI[0]->File = (char *)malloc(MAX_PATH);
-					memset(FI[0]->File, 0, MAX_PATH);
-					strcpy(FI[0]->File, innerText);
-					FI[0]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[0]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[0]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[0]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[0]->SetPackage = true;
-					FI[0]->Package = (char *)malloc(11);
-					memset(FI[0]->Package, 0, 11);
-					sprintf(FI[0]->Package, "TracksHigh");
-					FI[0]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-				else
-				{
-					FI[i - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-					FI[i - 1]->Path = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->Path, 0, MAX_PATH);
-					strcpy(FI[i - 1]->Path, path4);
-					FI[i - 1]->File = (char *)malloc(MAX_PATH);
-					memset(FI[i - 1]->File, 0, MAX_PATH);
-					strcpy(FI[i - 1]->File, innerText);
-					FI[i - 1]->Section = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					FI[i - 1]->Offset = atoi(ShardInfo->FirstChildElement("offset")->GetText());
-					FI[i - 1]->Lenght = atoi(ShardInfo->FirstChildElement("length")->GetText());
-					FI[i - 1]->Compressed = atoi(ShardInfo->FirstChildElement("compressed")->GetText());
-					FI[i - 1]->SetPackage = true;
-					FI[i - 1]->Package = (char *)malloc(11);
-					memset(FI[i - 1]->Package, 0, 11);
-					sprintf(FI[i - 1]->Package, "TracksHigh");
-					FI[i - 1]->ToSection = atoi(ShardInfo->FirstChildElement("section")->GetText());
-					tos = true;
-				}
-			}
-			delete[] innerText;
-			delete[] File;
-			delete[] str;
-		}
 	}
-	
-	for (short s = 0; s < i; s++)
+	WaitForSingleObject(ThreadVP[2], INFINITE);
+	WaitForSingleObject(ThreadVP[1], INFINITE);
+	WaitForSingleObject(ThreadVP[0], INFINITE);
+
+	for (short s = 0; s < FI_I; s++)
 	{
 		if (FI[s]->ToSection == 0)
 		{
@@ -902,7 +447,7 @@ void Downloader::Verify(VerifyArgument *param)
 		}
 	}
 
-	if (i == 0)
+	if (FI_I == 0)
 	{
 		Launcher::Get().SetPosProgressBar(0, 70);
 		Launcher::Get().StartGameEnable();
@@ -910,12 +455,9 @@ void Downloader::Verify(VerifyArgument *param)
 	else
 	{
 		DownloadThread *DT = new DownloadThread;
-
+		
 		DT->Path = (char *)malloc(MAX_PATH);
-		strcpy(DT->Path, path);
-		DT->i = i;
-		DT->FI = (FileInfo**)malloc(sizeof(FileInfo)* 100);
-		memcpy(&DT->FI, &FI, sizeof(sizeof(FileInfo)* 100));
+		sprintf(DT->Path, "%s\\Data", Launcher::GetGameDir());
 		DT->Url = (char *)malloc(256);
 		strcpy(DT->Url, param->ServerPath);
 
@@ -923,12 +465,11 @@ void Downloader::Verify(VerifyArgument *param)
 
 		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Downloader::Get().Download, (LPVOID)DT, 0, 0);
 	}
-	delete path1;
-	delete path;
+	t.stop();
+	Info("czas weryfikacji : %dms", t.elapsed());
 	delete param->ServerPath;
 	delete param->Package;
 	delete param;
-	delete[] languagePackage;
 	ExitThread(0);
 }
 
@@ -984,6 +525,85 @@ char *Downloader::GetIndexFile(char *url)
 	Sleep(50);
 
 	return output.buffer;
+}
+
+short Downloader::AddFileToFI(char *Path, char *File, int Section, int Offset, int Lenght, int Compressed, bool SetPackage, short PackageSize, char *Package, int ToSection)
+{
+	Downloader D;
+	D.LockMutex();
+	FI_I++;
+	if (!FI)
+	{
+		FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
+		FI[0]->Path = (char *)malloc(MAX_PATH);
+		memset(FI[0]->Path, 0, MAX_PATH);
+		strcpy(FI[0]->Path, Path);
+		FI[0]->File = (char *)malloc(MAX_PATH);
+		memset(FI[0]->File, 0, MAX_PATH);
+		strcpy(FI[0]->File, File);
+		FI[0]->Section = Section;
+		FI[0]->Offset = Offset;
+		FI[0]->Lenght = Lenght;
+		FI[0]->Compressed = Compressed;
+		if (SetPackage)
+		{
+			FI[0]->SetPackage = SetPackage;
+			FI[0]->Package = (char *)malloc(PackageSize);
+			memset(FI[0]->Package, 0, PackageSize);
+			strcpy(FI[0]->Package, Package);
+		}
+		else
+		{
+			FI[0]->SetPackage = SetPackage;
+		}
+		FI[0]->ToSection = ToSection;
+	}
+	else
+	{
+		FI[FI_I - 1] = (FileInfo*)malloc(sizeof(FileInfo));
+		FI[FI_I - 1]->Path = (char *)malloc(MAX_PATH);
+		memset(FI[FI_I - 1]->Path, 0, MAX_PATH);
+		strcpy(FI[FI_I - 1]->Path, Path);
+		FI[FI_I - 1]->File = (char *)malloc(MAX_PATH);
+		memset(FI[FI_I - 1]->File, 0, MAX_PATH);
+		strcpy(FI[FI_I - 1]->File, File);
+		FI[FI_I - 1]->Section = Section;
+		FI[FI_I - 1]->Offset = Offset;
+		FI[FI_I - 1]->Lenght = Lenght;
+		FI[FI_I - 1]->Compressed = Compressed;
+		if (SetPackage)
+		{
+			FI[FI_I - 1]->SetPackage = SetPackage;
+			FI[FI_I - 1]->Package = (char *)malloc(PackageSize);
+			memset(FI[FI_I - 1]->Package, 0, PackageSize);
+			strcpy(FI[FI_I - 1]->Package, Package);
+		}
+		else
+		{
+			FI[FI_I - 1]->SetPackage = SetPackage;
+		}
+		FI[FI_I - 1]->ToSection = ToSection;
+	}
+	return FI_I;
+	D.UnlockMutex();
+}
+
+void Downloader::ChangeToSectionInFI(short i, int ToSection)
+{
+	Downloader D;
+	D.LockMutex();
+	FI[i - 1]->ToSection = ToSection;
+	D.UnlockMutex();
+}
+
+void Downloader::LockMutex()
+{
+	WaitForSingleObject(Mutex, INFINITE);
+}
+
+void Downloader::UnlockMutex()
+{
+	ReleaseMutex(Mutex);
 }
 
 Downloader& Downloader::Get()

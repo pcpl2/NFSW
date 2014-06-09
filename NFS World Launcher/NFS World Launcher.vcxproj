@@ -44,16 +44,16 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\lzma920\C;..\libs\md5\;..\libs\base64\;..\libs\hex\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\lzma920\C;..\libs\md5\;..\libs\base64\;..\libs\hex\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;CURL_STATICLIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;lib_json.lib;LzmaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;lib_json.lib;LzmaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;..\libs\cryptopp562\Debug\;..\libs\jsoncpp0.5.0\build\debug\lib_json</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Debug\;..\libs\jsoncpp0.5.0\build\debug\lib_json</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCPMTD;MSVCRT;</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -64,7 +64,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\HTTP;..\libs\cryptopp562;..\libs\lzma920\C</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\curl\include;..\libs\tinyxml;..\libs\logger;.\;..\libs\lzma920\C;..\libs\md5\;..\libs\base64\;..\libs\hex\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -75,17 +75,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;cryptlib.lib;lib_json.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl_a.lib;ComCtl32.lib;ws2_32.lib;winmm.lib;wldap32.lib;lib_json.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
-      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;..\libs\cryptopp562\Release\;..\libs\jsoncpp0.5.0\build\release\lib_json</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\curl\lib\;..\libs\lzma920\Release\;..\libs\jsoncpp0.5.0\build\release\lib_json</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\libs\base64\base64.cpp" />
     <ClCompile Include="..\libs\hex\hex.cpp" />
-    <ClCompile Include="..\libs\HTTP\HTTP.cpp" />
     <ClCompile Include="..\libs\logger\Logger.cpp" />
     <ClCompile Include="..\libs\md5\md5.cpp" />
     <ClCompile Include="..\libs\tinyxml\tinyxml2.cpp" />
@@ -107,7 +106,6 @@
     <ClInclude Include="..\libs\curl\include\curl\stdcheaders.h" />
     <ClInclude Include="..\libs\curl\include\curl\typecheck-gcc.h" />
     <ClInclude Include="..\libs\hex\hex.h" />
-    <ClInclude Include="..\libs\HTTP\HTTP.h" />
     <ClInclude Include="..\libs\logger\Logger.h" />
     <ClInclude Include="..\libs\md5\md5.h" />
     <ClInclude Include="..\libs\tinyxml\tinyxml2.h" />

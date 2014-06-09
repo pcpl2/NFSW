@@ -31,9 +31,6 @@
     <Filter Include="lib\Tinyxml2">
       <UniqueIdentifier>{14a9450b-3d4a-4071-8de9-bb4e33bb2db0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib\HTTP">
-      <UniqueIdentifier>{038ae13b-3df2-4861-9b6e-a4237d71e222}</UniqueIdentifier>
-    </Filter>
     <Filter Include="lib\md5">
       <UniqueIdentifier>{8a68fe85-9a2c-4afc-b06b-0881afa1c423}</UniqueIdentifier>
     </Filter>
@@ -62,9 +59,6 @@
     </ClCompile>
     <ClCompile Include="Downloader.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\libs\HTTP\HTTP.cpp">
-      <Filter>lib\HTTP</Filter>
     </ClCompile>
     <ClCompile Include="Autoupdate.cpp">
       <Filter>Source Files</Filter>
@@ -127,9 +121,6 @@
     </ClInclude>
     <ClInclude Include="Downloader.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\HTTP\HTTP.h">
-      <Filter>lib\HTTP</Filter>
     </ClInclude>
     <ClInclude Include="Autoupdate.h">
       <Filter>Header Files</Filter>

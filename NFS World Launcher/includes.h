@@ -4,9 +4,6 @@
 
 #include <Windows.h>
 #include <stdio.h>
-#include <curl\curl.h>
-#include <tinyxml2.h>
-#include <Logger.h>
 #include <iostream>
 #include <string.h>
 #include <commctrl.h>
@@ -14,8 +11,11 @@
 #include <Shobjidl.h>
 #include <vector>
 
+#include <curl\curl.h>
+#include <tinyxml2.h>
 #include <LzmaLib.h>
 
+#include <Logger.h>
 #include <hex.h>
 #include <base64.h>
 #include <md5.h>
