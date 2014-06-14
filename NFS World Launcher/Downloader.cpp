@@ -583,7 +583,8 @@ void Downloader::UnlockMutex()
 	ReleaseMutex(Mutex);
 }
 
-Downloader& Downloader::Get()
+static Downloader * Get()
 {
-	return *instance;
+	static Downloader dl;
+	return &dl;
 }
