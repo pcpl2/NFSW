@@ -42,7 +42,6 @@ protected:
 	HANDLE ThreadV;
 private:
 	static Downloader *instance;
-	static FileInfo **FI;
 	static short FI_I;
 	HANDLE Mutex;
 public:

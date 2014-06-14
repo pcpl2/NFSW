@@ -1,13 +1,14 @@
 #include <includes.h>
 
 Downloader *Downloader::instance = 0;
-FileInfo **Downloader::FI = (FileInfo**)malloc(sizeof(FileInfo*)* 100);
+std::vector<FileInfo> GFI;
 short Downloader::FI_I = 0;
 
 Downloader::Downloader()
 {
 	instance = this;
 	Mutex = CreateMutex(NULL, FALSE, NULL);
+	//new FileInfo*[100];
 }
 
 Downloader::~Downloader()
@@ -69,27 +70,27 @@ void Downloader::Download(DownloadThread *DT)
 		char *Url = new char[256];
 		size_t result;
 
-		if (FI[s]->SetPackage)
-			sprintf(TempPathFile, "%s%s\\", TempPath, FI[s]->Package);
+		if (GFI[s].SetPackage)
+			sprintf(TempPathFile, "%s%s\\", TempPath, GFI[s].Package);
 		else
 			sprintf(TempPathFile, "%s\\", TempPath);
 
 		if (!Utils::FileExists(TempPathFile))
 			CreateDirectory(TempPathFile, NULL);
-		if (FI[s]->SetPackage)
+		if (GFI[s].SetPackage)
 			Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : %s\n",
-				FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed, FI[s]->Package);
+			GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed, GFI[s].Package);
 		else
 			Debug("Download : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : \n",
-				FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+			GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed);
 
-		for (int val2 = FI[s]->Section; val2 <= FI[s]->ToSection; ++val2)
+		for (int val2 = GFI[s].Section; val2 <= GFI[s].ToSection; ++val2)
 		{
 			sprintf(DatFile, "section%d.dat", val2);
 			Debug("%s", DatFile);
 
-			if (FI[s]->SetPackage)
-				sprintf(Url, "%s/%s/%s", DT->Url, FI[s]->Package, DatFile);
+			if (GFI[s].SetPackage)
+				sprintf(Url, "%s/%s/%s", DT->Url, GFI[s].Package, DatFile);
 			else
 				sprintf(Url, "%s/%s", DT->Url, DatFile);
 
@@ -123,21 +124,21 @@ void Downloader::Download(DownloadThread *DT)
 
 		}
 
-		if (strcmp(FI[s]->Path, "") != 0)
-			sprintf(File, "%s\\%s\\%s", DT->Path, FI[s]->Path, FI[s]->File);
+		if (strcmp(GFI[s].Path, "") != 0)
+			sprintf(File, "%s\\%s\\%s", DT->Path, GFI[s].Path, GFI[s].File);
 		else
-			sprintf(File, "%s\\%s", DT->Path, FI[s]->File);
+			sprintf(File, "%s\\%s", DT->Path, GFI[s].File);
 
 		char *Directory = new char[MAX_PATH];
-		sprintf(Directory, "%s\\%s", DT->Path, FI[s]->Path);
+		sprintf(Directory, "%s\\%s", DT->Path, GFI[s].Path);
 
 		if (!Utils::FileExists(Directory))
 			CreateDirectory(Directory, NULL);
 
 		delete Directory;
 
-		SizeT srcLen = FI[s]->Compressed - 13;
-		SizeT destLen = FI[s]->Lenght;
+		SizeT srcLen = GFI[s].Compressed - 13;
+		SizeT destLen = GFI[s].Lenght;
 
 		unsigned char Prop[5];
 		unsigned char Arr[13];
@@ -145,7 +146,7 @@ void Downloader::Download(DownloadThread *DT)
 		std::vector<unsigned char> inBuf2;
 		//unsigned char *LZMA;
 
-		for (int x = FI[s]->Section; x <= FI[s]->ToSection; x++)
+		for (int x = GFI[s].Section; x <= GFI[s].ToSection; x++)
 		{
 			sprintf(DatFile, "section%d.dat", x);
 			sprintf(DatFileInTemp, "%s%s", TempPathFile, DatFile);
@@ -167,15 +168,15 @@ void Downloader::Download(DownloadThread *DT)
 			*/
 			std::vector<unsigned char> inBuf(sz);
 			result = fread(&inBuf[0], 1, sz, fp);
-			
+
 			if (result != sz)
 				Debug("Reading error");
 			fclose(fp);
-			
+
 			for (int y = 0; y < sz; y++)
 
 				inBuf1.push_back(inBuf.at(y));
-			
+
 			//memcpy(LZMA + sizeof(LZMA), FileData, sizeof(FileData));
 			//delete FileData;
 			//inBuf.clear();
@@ -185,16 +186,16 @@ void Downloader::Download(DownloadThread *DT)
 		delete DatFile;
 
 		for (int index = 0; index < 13; index++)
-			Arr[index] = inBuf1.at(FI[s]->Offset + index);
+			Arr[index] = inBuf1.at(GFI[s].Offset + index);
 
 		/*
-		memcpy(&Arr, LZMA + FI[s]->Offset, 13);
-		unsigned char *LZMA2 = new unsigned char[FI[s]->Offset + FI[s]->Compressed + 1];*/
-		for (int index = FI[s]->Offset + 13; index < FI[s]->Offset + FI[s]->Compressed; index++)
+		memcpy(&Arr, LZMA + GFI[s].Offset, 13);
+		unsigned char *LZMA2 = new unsigned char[GFI[s].Offset + GFI[s].Compressed + 1];*/
+		for (int index = GFI[s].Offset + 13; index < GFI[s].Offset + GFI[s].Compressed; index++)
 			inBuf2.push_back(inBuf1.at(index));
 
 		inBuf1.clear();
-		//memcpy(&LZMA2, LZMA + FI[s]->Offset + 13, FI[s]->Offset + FI[s]->Compressed);
+		//memcpy(&LZMA2, LZMA + GFI[s].Offset + 13, GFI[s].Offset + GFI[s].Compressed);
 
 		memcpy(Prop, Arr, 5);
 
@@ -234,8 +235,8 @@ void Downloader::Download(DownloadThread *DT)
 
 void Downloader::VerifyProcess(VerifyP *VP)
 {
-	char *path = new char[MAX_PATH];
-	char *path1 = new char[MAX_PATH];
+	char path[MAX_PATH];
+	char path1[MAX_PATH];
 	char FilePath[128];
 	char ServerPath[128];
 	bool tos = false;
@@ -273,7 +274,7 @@ void Downloader::VerifyProcess(VerifyP *VP)
 	{
 		Utils::Timer t;
 		t.start();
-		char *path3 = new char;
+		char *path3 = { 0 };
 		char path4[MAX_PATH] = { 0 };
 		char *innerText = new char[MAX_PATH];
 		char *File = new char[MAX_PATH];
@@ -426,24 +427,24 @@ void Downloader::Verify(VerifyArgument *param)
 
 	for (short s = 0; s < FI_I; s++)
 	{
-		if (FI[s]->ToSection == 0)
+		if (GFI[s].ToSection == 0)
 		{
-			FI[s]->ToSection = FI[s]->Section;
-			if (FI[s]->SetPackage)
+			GFI[s].ToSection = GFI[s].Section;
+			if (GFI[s].SetPackage)
 				Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : %s\n",
-					FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed, FI[s]->Package);
+				GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed, GFI[s].Package);
 			else
 				Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : \n",
-					FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+				GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed);
 		}
 		else
 		{
-			if (FI[s]->SetPackage)
+			if (GFI[s].SetPackage)
 				Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : %s\n",
-					FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed, FI[s]->Package);
+				GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed, GFI[s].Package);
 			else
 				Debug("Verify : \npath : %s\nfile : %s\nSection : %d\nToSection : %d\noffset : %d\nlength : %d\ncompressed : %d\nPackage : \n",
-					FI[s]->Path, FI[s]->File, FI[s]->Section, FI[s]->ToSection, FI[s]->Offset, FI[s]->Lenght, FI[s]->Compressed);
+				GFI[s].Path, GFI[s].File, GFI[s].Section, GFI[s].ToSection, GFI[s].Offset, GFI[s].Lenght, GFI[s].Compressed);
 		}
 	}
 
@@ -529,71 +530,47 @@ char *Downloader::GetIndexFile(char *url)
 
 short Downloader::AddFileToFI(char *Path, char *File, int Section, int Offset, int Lenght, int Compressed, bool SetPackage, short PackageSize, char *Package, int ToSection)
 {
-	Downloader D;
-	D.LockMutex();
+	FileInfo FI;
+
+	Downloader::Get().LockMutex();
 	FI_I++;
-	if (!FI)
+
+	FI.Path = new char[MAX_PATH];
+	memset(FI.Path, 0, MAX_PATH);
+	strcpy(FI.Path, Path);
+	FI.File = new char[MAX_PATH];
+	memset(FI.File, 0, MAX_PATH);
+	strcpy(FI.File, File);
+	FI.Section = Section;
+	FI.Offset = Offset;
+	FI.Lenght = Lenght;
+	FI.Compressed = Compressed;
+	if (SetPackage)
 	{
-		FI[0] = (FileInfo*)malloc(sizeof(FileInfo));
-		FI[0]->Path = (char *)malloc(MAX_PATH);
-		memset(FI[0]->Path, 0, MAX_PATH);
-		strcpy(FI[0]->Path, Path);
-		FI[0]->File = (char *)malloc(MAX_PATH);
-		memset(FI[0]->File, 0, MAX_PATH);
-		strcpy(FI[0]->File, File);
-		FI[0]->Section = Section;
-		FI[0]->Offset = Offset;
-		FI[0]->Lenght = Lenght;
-		FI[0]->Compressed = Compressed;
-		if (SetPackage)
-		{
-			FI[0]->SetPackage = SetPackage;
-			FI[0]->Package = (char *)malloc(PackageSize);
-			memset(FI[0]->Package, 0, PackageSize);
-			strcpy(FI[0]->Package, Package);
-		}
-		else
-		{
-			FI[0]->SetPackage = SetPackage;
-		}
-		FI[0]->ToSection = ToSection;
+		FI.SetPackage = SetPackage;
+		FI.Package = new char[PackageSize];
+		memset(FI.Package, 0, PackageSize);
+		strcpy(FI.Package, Package);
 	}
 	else
 	{
-		FI[FI_I - 1] = (FileInfo*)malloc(sizeof(FileInfo));
-		FI[FI_I - 1]->Path = (char *)malloc(MAX_PATH);
-		memset(FI[FI_I - 1]->Path, 0, MAX_PATH);
-		strcpy(FI[FI_I - 1]->Path, Path);
-		FI[FI_I - 1]->File = (char *)malloc(MAX_PATH);
-		memset(FI[FI_I - 1]->File, 0, MAX_PATH);
-		strcpy(FI[FI_I - 1]->File, File);
-		FI[FI_I - 1]->Section = Section;
-		FI[FI_I - 1]->Offset = Offset;
-		FI[FI_I - 1]->Lenght = Lenght;
-		FI[FI_I - 1]->Compressed = Compressed;
-		if (SetPackage)
-		{
-			FI[FI_I - 1]->SetPackage = SetPackage;
-			FI[FI_I - 1]->Package = (char *)malloc(PackageSize);
-			memset(FI[FI_I - 1]->Package, 0, PackageSize);
-			strcpy(FI[FI_I - 1]->Package, Package);
-		}
-		else
-		{
-			FI[FI_I - 1]->SetPackage = SetPackage;
-		}
-		FI[FI_I - 1]->ToSection = ToSection;
+		FI.SetPackage = SetPackage;
 	}
-	return FI_I;
-	D.UnlockMutex();
+	FI.ToSection = ToSection;
+
+	GFI.push_back(FI);
+
+	Downloader::Get().UnlockMutex();
+ 	return FI_I;
 }
 
 void Downloader::ChangeToSectionInFI(short i, int ToSection)
 {
-	Downloader D;
-	D.LockMutex();
-	FI[i - 1]->ToSection = ToSection;
-	D.UnlockMutex();
+	Downloader::Get().LockMutex();
+
+	GFI[i - 1].ToSection = ToSection;
+
+	Downloader::Get().UnlockMutex();
 }
 
 void Downloader::LockMutex()

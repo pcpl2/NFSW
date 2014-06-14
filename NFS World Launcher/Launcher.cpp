@@ -398,7 +398,7 @@ bool Launcher::GetGameDirFromRegistry()
 
 LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	Downloader D;
+	Downloader *D = new Downloader;
 	
 	if (SevenOrNewer)
 	{
@@ -445,11 +445,11 @@ LRESULT CALLBACK Launcher::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				ShowWindow(Button[2], SW_SHOW);
 				ShowWindow(ProgressBar[0], SW_SHOW);
 				ShowWindow(ProgressBar[1], SW_SHOW);
-				D.StartVerificationAndDownload(true, "en", GameUrl);
+				D->StartVerificationAndDownload(true, "en", GameUrl);
 			}
 			break;
 		case ID_Button2:
-			D.StartVerificationAndDownload(true, "en", GameUrl); //debug
+			D->StartVerificationAndDownload(true, "en", GameUrl); //debug
 			//		ShowWindow(Window[1], SW_SHOW);
 			break;
 		case ID_Button3:
